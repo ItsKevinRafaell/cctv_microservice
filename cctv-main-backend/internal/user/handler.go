@@ -119,3 +119,28 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Pengguna berhasil dihapus."))
 }
+
+func (h *Handler) UpdateFCMToken(w http.ResponseWriter, r *http.Request) {
+	// Ambil ID pengguna dari token JWT yang sudah divalidasi
+	claims, _ := r.Context().Value(auth.UserClaimsKey).(jwt.MapClaims)
+	userID, _ := claims["user_id"].(float64)
+
+	// Baca fcm_token dari body request
+	var payload struct {
+		FCMToken string `json:"fcm_token"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, "Request body tidak valid", http.StatusBadRequest)
+		return
+	}
+
+	// Panggil service untuk menyimpan token
+	err := h.service.SaveFCMToken(int64(userID), payload.FCMToken)
+	if err != nil {
+		http.Error(w, "Gagal menyimpan token FCM", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Token FCM berhasil diperbarui."))
+}

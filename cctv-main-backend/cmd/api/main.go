@@ -39,6 +39,7 @@ func main() {
 	mux.HandleFunc("/api/register", userHandler.Register)
 	mux.HandleFunc("/api/login", userHandler.Login)
 	mux.HandleFunc("/api/users", authMiddleware(userHandler.GetAllUsers))
+	mux.HandleFunc("/api/users/fcm-token", authMiddleware(userHandler.UpdateFCMToken))
 	mux.HandleFunc("/api/users/", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPut:
