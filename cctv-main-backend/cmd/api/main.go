@@ -7,9 +7,11 @@ import (
 	"cctv-main-backend/internal/user"
 	"cctv-main-backend/pkg/database"
 	"cctv-main-backend/pkg/notifier"
+	"context"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
@@ -17,25 +19,52 @@ func main() {
 	database.Migrate(db)
 	defer db.Close()
 
-	logNotifier := notifier.NewLogNotifier()
 	mux := http.NewServeMux()
 
+	// repos
 	anomalyRepo := anomaly.NewRepository(db)
-	anomalyService := anomaly.NewService(anomalyRepo, logNotifier)
+	userRepo := user.NewRepository(db)
+	companyRepo := company.NewRepository(db)
+	cameraRepo := camera.NewRepository(db)
+
+	// notifier: FCM jika kredensial ada, else log
+	var n notifier.Notifier
+	if cred := os.Getenv("FIREBASE_CREDENTIALS"); cred != "" {
+		fcm, err := notifier.NewFCM(context.Background(), cred)
+		if err != nil {
+			log.Println("FCM init error, fallback ke log:", err)
+			n = notifier.NewLogNotifier()
+		} else {
+			fcm.GetAdminTokens = userRepo.GetAdminFCMTokensByCompany
+			fcm.GetCompanyIDByCameraID = cameraRepo.GetCompanyIDByCameraID
+			fcm.UseTopic = false // kirim langsung ke semua admin company
+			fcm.TopicPrefix = "alerts"
+			n = fcm // <-- penting!
+		}
+	} else {
+		n = notifier.NewLogNotifier()
+	}
+
+	if _, ok := n.(*notifier.FCM); ok {
+		log.Println("Notifier: FCM (direct-to-token)")
+	} else {
+		log.Println("Notifier: LOG (fallback)")
+	}
+
+	// services + handlers
+	anomalyService := anomaly.NewService(anomalyRepo, n) // <<< gunakan n di sini
 	anomalyHandler := anomaly.NewHandler(anomalyService)
 
-	userRepo := user.NewRepository(db)
 	userService := user.NewService(userRepo)
 	userHandler := user.NewHandler(userService)
 
-	companyRepo := company.NewRepository(db)
 	companyService := company.NewService(companyRepo)
 	companyHandler := company.NewHandler(companyService)
 
-	cameraRepo := camera.NewRepository(db)
 	cameraService := camera.NewService(cameraRepo)
 	cameraHandler := camera.NewHandler(cameraService)
 
+	// routes (sama seperti punyamu)
 	mux.HandleFunc("/api/register", userHandler.Register)
 	mux.HandleFunc("/api/login", userHandler.Login)
 	mux.HandleFunc("/api/users", authMiddleware(userHandler.GetAllUsers))
