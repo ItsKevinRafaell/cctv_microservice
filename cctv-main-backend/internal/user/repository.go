@@ -14,6 +14,7 @@ type Repository interface {
 	DeleteUser(userID, companyID int64) error
 	UpdateFCMToken(userID int64, fcmToken string) error
 	GetAdminFCMTokensByCompany(ctx context.Context, companyID int64) ([]string, error)
+	DeleteFCMTokenByValue(ctx context.Context, token string) error
 }
 
 type repository struct {
@@ -120,4 +121,9 @@ func (r *repository) GetAdminFCMTokensByCompany(ctx context.Context, companyID i
 		tokens = append(tokens, t)
 	}
 	return tokens, rows.Err()
+}
+
+func (r *repository) DeleteFCMTokenByValue(ctx context.Context, token string) error {
+	_, err := r.db.ExecContext(ctx, `UPDATE users SET fcm_token = NULL WHERE fcm_token = $1`, token)
+	return err
 }

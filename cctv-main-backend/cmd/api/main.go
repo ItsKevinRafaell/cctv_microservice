@@ -37,6 +37,7 @@ func main() {
 		} else {
 			fcm.GetAdminTokens = userRepo.GetAdminFCMTokensByCompany
 			fcm.GetCompanyIDByCameraID = cameraRepo.GetCompanyIDByCameraID
+			fcm.DeleteToken = userRepo.DeleteFCMTokenByValue
 			fcm.UseTopic = false // kirim langsung ke semua admin company
 			fcm.TopicPrefix = "alerts"
 			n = fcm // <-- penting!
@@ -127,6 +128,11 @@ func main() {
 			http.Error(w, "Metode tidak diizinkan", http.StatusMethodNotAllowed)
 		}
 	}))
+
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	})
 
 	port := "8080"
 	fmt.Printf("Server berjalan di http://localhost:%s\n", port)
