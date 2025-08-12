@@ -13,7 +13,8 @@ type RabbitMQPublisher struct {
 }
 
 func NewRabbitMQPublisher(url string) (*RabbitMQPublisher, error) {
-	conn, err := amqp.Dial("amqp://guest:guest@rabbitmq:5672/")
+	// NEW: gunakan url yang diberikan, jangan hardcode
+	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
 	}
@@ -27,6 +28,7 @@ func (p *RabbitMQPublisher) Publish(queueName string, taskMessage map[string]str
 	}
 	defer ch.Close()
 
+	// Queue durable
 	q, err := ch.QueueDeclare(queueName, true, false, false, false, nil)
 	if err != nil {
 		return err
@@ -40,12 +42,16 @@ func (p *RabbitMQPublisher) Publish(queueName string, taskMessage map[string]str
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	// NEW: pesan persisten + metadata
 	return ch.PublishWithContext(ctx, "", q.Name, false, false, amqp.Publishing{
-		ContentType: "application/json",
-		Body:        body,
+		ContentType:  "application/json",
+		DeliveryMode: amqp.Persistent,
+		Timestamp:    time.Now(),
+		MessageId:    time.Now().Format("20060102T150405.000000000"),
+		Body:         body,
 	})
 }
 
 func (p *RabbitMQPublisher) Close() {
-	p.conn.Close()
+	_ = p.conn.Close()
 }

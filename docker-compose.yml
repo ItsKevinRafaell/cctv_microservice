@@ -41,6 +41,8 @@ services:
     environment:
       - CUDA_VISIBLE_DEVICES=-1
       - KERAS_BACKEND=tensorflow
+      - ANOMALY_THRESHOLD=0.80
+      - WINDOW_STRIDE=5
 
   # Database
   db:

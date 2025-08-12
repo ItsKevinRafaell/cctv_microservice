@@ -3,6 +3,7 @@ package ingest
 import (
 	"log"
 	"net/http"
+	"strconv" // NEW
 )
 
 type Handler struct {
@@ -32,10 +33,21 @@ func (h *Handler) VideoIngestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	log.Printf("✅ Menerima file: %s, Ukuran: %d bytes\n", handler.Filename, handler.Size)
+	// NEW: baca camera_id dari form
+	cameraIDStr := r.FormValue("camera_id")
+	if cameraIDStr == "" {
+		http.Error(w, "camera_id wajib diisi (multipart form field)", http.StatusBadRequest)
+		return
+	}
+	if _, err := strconv.Atoi(cameraIDStr); err != nil {
+		http.Error(w, "camera_id harus angka", http.StatusBadRequest)
+		return
+	}
 
-	err = h.service.ProcessVideo(file, handler)
-	if err != nil {
+	log.Printf("✅ Menerima file: %s, Ukuran: %d bytes, camera_id=%s\n", handler.Filename, handler.Size, cameraIDStr)
+
+	// NEW: teruskan cameraIDStr ke service
+	if err := h.service.ProcessVideo(file, handler, cameraIDStr); err != nil {
 		log.Printf("❌ Gagal memproses video: %v\n", err)
 		http.Error(w, "Gagal memproses file", http.StatusInternalServerError)
 		return
