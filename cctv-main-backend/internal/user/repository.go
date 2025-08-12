@@ -2,6 +2,7 @@ package user
 
 import (
 	"cctv-main-backend/internal/domain"
+	"context"
 	"database/sql"
 )
 
@@ -12,6 +13,7 @@ type Repository interface {
 	UpdateUserRole(userID, companyID int64, role string) error
 	DeleteUser(userID, companyID int64) error
 	UpdateFCMToken(userID int64, fcmToken string) error
+	GetAdminFCMTokensByCompany(ctx context.Context, companyID int64) ([]string, error)
 }
 
 type repository struct {
@@ -96,4 +98,26 @@ func (r *repository) UpdateFCMToken(userID int64, fcmToken string) error {
 		return sql.ErrNoRows
 	}
 	return nil
+}
+
+func (r *repository) GetAdminFCMTokensByCompany(ctx context.Context, companyID int64) ([]string, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT fcm_token
+		FROM users
+		WHERE company_id=$1 AND role='company_admin' AND fcm_token IS NOT NULL AND fcm_token <> ''`,
+		companyID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var tokens []string
+	for rows.Next() {
+		var t string
+		if err := rows.Scan(&t); err != nil {
+			return nil, err
+		}
+		tokens = append(tokens, t)
+	}
+	return tokens, rows.Err()
 }

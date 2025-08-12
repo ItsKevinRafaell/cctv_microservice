@@ -3,6 +3,8 @@ package anomaly
 import (
 	"cctv-main-backend/internal/domain"
 	"cctv-main-backend/pkg/notifier"
+	"context"
+	"log"
 )
 
 type Service interface {
@@ -20,13 +22,19 @@ func NewService(repo Repository, notifier notifier.Notifier) Service {
 }
 
 func (s *service) SaveReport(report *domain.AnomalyReport) error {
-	err := s.repo.CreateReport(report)
-	if err != nil {
+	if err := s.repo.CreateReport(report); err != nil {
 		return err
 	}
 
-	go s.notifier.Send(report)
-
+	// 2) Kirim notifikasi (sinkron agar jelas terlihat di log)
+	if s.notifier != nil {
+		if err := s.notifier.NotifyAnomaly(context.Background(), report); err != nil {
+			log.Printf("NotifyAnomaly error: %v", err)
+			// tidak return error supaya penyimpanan tetap dianggap sukses
+		}
+	} else {
+		log.Println("NotifyAnomaly skip: notifier nil")
+	}
 	return nil
 }
 

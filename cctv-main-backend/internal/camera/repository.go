@@ -2,6 +2,7 @@ package camera
 
 import (
 	"cctv-main-backend/internal/domain"
+	"context"
 	"database/sql"
 	"errors"
 )
@@ -11,6 +12,8 @@ type Repository interface {
 	GetCamerasByCompanyID(companyID int64) ([]domain.Camera, error)
 	UpdateCamera(camera *domain.Camera) error
 	DeleteCamera(cameraID int64, companyID int64) error
+	// NEW: ambil company_id berdasarkan camera_id (untuk FCM)
+	GetCompanyIDByCameraID(ctx context.Context, cameraID int64) (int64, error)
 }
 
 type repository struct {
@@ -88,4 +91,18 @@ func (r *repository) DeleteCamera(cameraID int64, companyID int64) error {
 	}
 
 	return nil
+}
+
+// NEW: lookup company_id dari camera_id (dipakai FCM untuk ambil token admin per company)
+func (r *repository) GetCompanyIDByCameraID(ctx context.Context, cameraID int64) (int64, error) {
+	var companyID int64
+	err := r.db.QueryRowContext(ctx, `SELECT company_id FROM cameras WHERE id = $1`, cameraID).Scan(&companyID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// kamera tidak ditemukan → kembalikan 0 (biar FCM fallback ke topic)
+			return 0, nil
+		}
+		return 0, err
+	}
+	return companyID, nil
 }

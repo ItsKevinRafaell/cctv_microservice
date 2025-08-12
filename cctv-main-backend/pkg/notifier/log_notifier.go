@@ -2,12 +2,15 @@ package notifier
 
 import (
 	"cctv-main-backend/internal/domain"
+	"context"
+	"fmt"
 	"log"
 )
 
 // Notifier adalah interface untuk semua jenis pengirim notifikasi.
 type Notifier interface {
 	Send(report *domain.AnomalyReport) error
+	NotifyAnomaly(ctx context.Context, r *domain.AnomalyReport) error
 }
 
 // LogNotifier adalah implementasi Notifier yang hanya mencetak ke log.
@@ -24,5 +27,11 @@ func (n *LogNotifier) Send(report *domain.AnomalyReport) error {
 	log.Printf("  > Judul: Anomali Terdeteksi!")
 	log.Printf("  > Isi: Terdeteksi '%s' dengan kepercayaan %.2f%%", report.AnomalyType, report.Confidence*100)
 	log.Println("------------------------------------")
+	return nil
+}
+
+func (n *LogNotifier) NotifyAnomaly(ctx context.Context, r *domain.AnomalyReport) error {
+	fmt.Printf("[LOG NOTIF] Anomali kamera=%d conf=%.2f url=%s\n",
+		r.CameraID, r.Confidence, r.VideoClipURL)
 	return nil
 }

@@ -9,6 +9,10 @@ services:
     depends_on:
       - db
       - rabbitmq
+    environment:
+      - FIREBASE_CREDENTIALS=/app/creds/service-account.json
+    volumes:
+      - ./secrets/firebase-service-account.json:/app/creds/service-account.json:ro
 
   # Backend Penerima
   api_ingestion:
