@@ -11,6 +11,7 @@ type Repository interface {
 	GetUsersByCompanyID(companyID int64) ([]domain.User, error)
 	UpdateUserRole(userID, companyID int64, role string) error
 	DeleteUser(userID, companyID int64) error
+	UpdateFCMToken(userID int64, fcmToken string) error
 }
 
 type repository struct {
@@ -74,6 +75,19 @@ func (r *repository) UpdateUserRole(userID, companyID int64, role string) error 
 func (r *repository) DeleteUser(userID, companyID int64) error {
 	query := `DELETE FROM users WHERE id = $1 AND company_id = $2`
 	result, err := r.db.Exec(query, userID, companyID)
+	if err != nil {
+		return err
+	}
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
+func (r *repository) UpdateFCMToken(userID int64, fcmToken string) error {
+	query := `UPDATE users SET fcm_token = $1 WHERE id = $2`
+	result, err := r.db.Exec(query, fcmToken, userID)
 	if err != nil {
 		return err
 	}

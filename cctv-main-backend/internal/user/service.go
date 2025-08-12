@@ -17,6 +17,7 @@ type Service interface {
 	FindUsersByCompany(companyID int64) ([]domain.User, error)
 	UpdateRole(userID, companyID int64, role string) error
 	Delete(userID, companyID int64) error
+	SaveFCMToken(userID int64, fcmToken string) error
 }
 
 type service struct {
@@ -74,4 +75,8 @@ func (s *service) UpdateRole(userID, companyID int64, role string) error {
 
 func (s *service) Delete(userID, companyID int64) error {
 	return s.repo.DeleteUser(userID, companyID)
+}
+
+func (s *service) SaveFCMToken(userID int64, fcmToken string) error {
+	return s.repo.UpdateFCMToken(userID, fcmToken)
 }
