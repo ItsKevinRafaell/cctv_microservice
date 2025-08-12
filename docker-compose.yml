@@ -1,0 +1,92 @@
+services:
+  # Backend Utama
+  api_main:
+    build: ./cctv-main-backend
+    ports:
+      - "8080:8080"
+    networks:
+      - cctv_network
+    depends_on:
+      - db
+      - rabbitmq
+
+  # Backend Penerima
+  api_ingestion:
+    build: ./cctv-ingestion-service
+    # !!!!! TAMBAHKAN BLOK INI !!!!!
+    ports:
+      # Map port 8081 di laptop Anda ke port 8081 di dalam kontainer
+      - "8081:8081"
+    volumes:
+      - ingestion_uploads:/app/uploads
+    networks:
+      - cctv_network
+    depends_on:
+      - rabbitmq
+
+  # AI Worker
+  ai_worker:
+    build: ./cctv-ai-worker
+    volumes:
+      - ingestion_uploads:/app/uploads
+    networks:
+      - cctv_network
+    depends_on:
+      - rabbitmq
+      - api_main
+    environment:
+      - CUDA_VISIBLE_DEVICES=-1
+      - KERAS_BACKEND=tensorflow
+
+  # Database
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=cctv_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - cctv_network
+
+  # Antrian Tugas
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq/
+    networks:
+      - cctv_network
+
+  # Penyimpanan File
+  minio:
+    image: minio/minio:latest
+    restart: always
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minio-secret-key
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - cctv_network
+
+# Definisikan network dan volume
+networks:
+  cctv_network:
+
+volumes:
+  db_data:
+  rabbitmq_data:
+  minio_data:
+  ingestion_uploads:
