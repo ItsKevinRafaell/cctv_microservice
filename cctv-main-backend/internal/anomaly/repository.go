@@ -9,6 +9,7 @@ import (
 type Repository interface {
 	CreateReport(report *domain.AnomalyReport) error
 	GetAllReportsByCompany(companyID int64) ([]domain.AnomalyReport, error)
+	GetRecentReportsByCompany(companyID int64, limit int) ([]domain.AnomalyReport, error)
 }
 
 type repository struct {
@@ -50,4 +51,32 @@ func (r *repository) GetAllReportsByCompany(companyID int64) ([]domain.AnomalyRe
 		reports = append(reports, report)
 	}
 	return reports, nil
+}
+
+func (r *repository) GetRecentReportsByCompany(companyID int64, limit int) ([]domain.AnomalyReport, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	const q = `
+        SELECT r.id, r.camera_id, r.anomaly_type, r.confidence, r.video_clip_url, r.reported_at
+        FROM anomaly_reports r
+        JOIN cameras c ON r.camera_id = c.id
+        WHERE c.company_id = $1
+        ORDER BY r.reported_at DESC
+        LIMIT $2`
+	rows, err := r.db.Query(q, companyID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var reports []domain.AnomalyReport
+	for rows.Next() {
+		var report domain.AnomalyReport
+		if err := rows.Scan(&report.ID, &report.CameraID, &report.AnomalyType, &report.Confidence, &report.VideoClipURL, &report.ReportedAt); err != nil {
+			return nil, err
+		}
+		reports = append(reports, report)
+	}
+	return reports, rows.Err()
 }

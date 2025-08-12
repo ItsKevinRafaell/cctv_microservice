@@ -82,6 +82,7 @@ func main() {
 
 	mux.HandleFunc("/api/report-anomaly", anomalyHandler.CreateReport)
 	mux.HandleFunc("/api/anomalies", authMiddleware(anomalyHandler.GetAllReports))
+	mux.HandleFunc("/api/anomalies/recent", authMiddleware(anomalyHandler.GetRecent))
 
 	mux.HandleFunc("/api/companies", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
