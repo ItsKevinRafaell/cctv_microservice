@@ -95,7 +95,7 @@ Kita perlu mendaftarkan perusahaan, pengguna, dan kamera terlebih dahulu. Buka *
 2.  **Kirim Video ke Backend Penerima:**
 
     ```bash
-    curl -X POST -F "video_clip=@force_anomaly_clip.mp4" http://localhost:8081/ingest/video
+    curl -X POST -F "video_clip=@clip.mp4" http://localhost:8081/ingest/video
     ```
 
 #### C. Verifikasi Hasilnya

@@ -7,7 +7,6 @@ class RabbitMQService:
         self.queue_name = queue_name
         self.connection = None
 
-        # Coba connect berulang
         max_retries = 10
         retry_delay = 5
         for i in range(max_retries):
@@ -25,7 +24,6 @@ class RabbitMQService:
 
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue=self.queue_name, durable=True)
-        # Satu task per worker sekaligus
         self.channel.basic_qos(prefetch_count=1)
 
     def consume_tasks(self, callback_function):
