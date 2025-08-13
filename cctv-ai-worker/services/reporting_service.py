@@ -1,3 +1,4 @@
+# services/reporting_service.py
 import time
 import requests
 
@@ -7,7 +8,8 @@ class ReportingService:
         self.timeout = timeout
         self.max_retries = max_retries
 
-    def send_report(self, camera_id: int, confidence_score: float, video_url: str, anomaly_type: str = "model_detected") -> bool:
+    def send_report(self, camera_id: int, confidence_score: float, video_url: str,
+                    anomaly_type: str = "model_detected") -> bool:
         payload = {
             'camera_id': int(camera_id),
             'anomaly_type': anomaly_type or 'model_detected',

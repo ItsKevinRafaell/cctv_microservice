@@ -7,19 +7,22 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 )
 
 func main() {
+	// MinIO (intra-docker)
 	s3Uploader, err := uploader.NewS3Uploader(
-		"http://minio:9000", // Endpoint MinIO dari dalam Docker
-		"minioadmin",        // Access Key dari docker-compose
-		"minio-secret-key",  // Secret Key dari docker-compose
-		"video-clips",       // Nama bucket
+		"http://minio:9000",
+		"minioadmin",
+		"minio-secret-key",
+		"video-clips",
 	)
 	if err != nil {
-		log.Fatalf("Gagal menginisialisasi S3 Uploader: %v", err)
+		log.Fatalf("Gagal init S3 Uploader: %v", err)
 	}
 
+	// RabbitMQ (intra-docker)
 	rabbitPublisher, err := mq.NewRabbitMQPublisher("amqp://guest:guest@rabbitmq:5672/")
 	if err != nil {
 		log.Fatalf("Gagal terhubung ke RabbitMQ: %v", err)
@@ -27,17 +30,36 @@ func main() {
 	defer rabbitPublisher.Close()
 	log.Println("✅ Berhasil terhubung ke RabbitMQ!")
 
-	// Dependency Injection dengan uploader baru
 	ingestService := ingest.NewService(s3Uploader, rabbitPublisher)
 	ingestHandler := ingest.NewHandler(ingestService)
 
-	// Routing
-	http.HandleFunc("/ingest/video", ingestHandler.VideoIngestHandler)
+	// Router explicit + healthz
+	mux := http.NewServeMux()
+	mux.HandleFunc("/ingest/video", ingestHandler.VideoIngestHandler) // endpoint kamu
+	mux.HandleFunc("/upload", ingestHandler.VideoIngestHandler)       // alias (opsional)
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("ok"))
+	})
 
-	// Jalankan Server
-	port := "8081"
-	fmt.Printf("Server penerima video (Ingestion Service) berjalan di http://localhost:%s\n", port)
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
+	// Server dengan timeouts (hindari “loading terus”)
+	srv := &http.Server{
+		Addr:              ":8081",
+		Handler:           logMiddleware(mux),
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       60 * time.Second,
+		WriteTimeout:      60 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+
+	fmt.Println("Server penerima video (Ingestion Service) berjalan di http://localhost:8081")
+	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal("Gagal memulai server:", err)
 	}
+}
+
+func logMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("%s %s", r.Method, r.URL.Path)
+		h.ServeHTTP(w, r)
+	})
 }

@@ -1,5 +1,5 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # paksa CPU-only
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 print("CUDA_VISIBLE_DEVICES =", os.environ.get("CUDA_VISIBLE_DEVICES"))
 
 import json
@@ -8,7 +8,6 @@ from core.processor import VideoProcessor
 from services.mq_service import RabbitMQService
 from services.reporting_service import ReportingService
 
-# --- PENGATURAN ---
 RABBITMQ_HOST = 'rabbitmq'
 MAIN_BACKEND_HOST = 'api_main'
 QUEUE_NAME = 'video_analysis_tasks'
@@ -24,7 +23,7 @@ def main():
         print(f"\n [x] Menerima tugas baru: {body.decode(errors='ignore')}")
         try:
             task = json.loads(body)
-            video_processor.analyze(task)  # akan raise kalau kirim report gagal
+            video_processor.analyze(task)
             ch.basic_ack(delivery_tag=method.delivery_tag)
         except Exception as e:
             print(f" [!] Task gagal: {e} -> NACK & requeue")
