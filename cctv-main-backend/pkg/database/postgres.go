@@ -68,7 +68,7 @@ func Migrate(db *sql.DB) {
 		camera_id INTEGER NOT NULL REFERENCES cameras(id) ON DELETE CASCADE,
 		anomaly_type VARCHAR(50) NOT NULL,
 		confidence FLOAT NOT NULL,
-		video_clip_url VARCHAR(255), -- Untuk menyimpan link video bukti
+		video_clip_url TEXT, -- Untuk menyimpan link video bukti
 		reported_at TIMESTAMP WITH TIME ZONE NOT NULL
 	);`
 	if _, err := db.Exec(createAnomalyTable); err != nil {

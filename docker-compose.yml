@@ -43,14 +43,17 @@ services:
       - CUDA_VISIBLE_DEVICES=-1
       - KERAS_BACKEND=tensorflow
       - INFER_MODE=uniform            # <— samakan dengan training
-      - ANOMALY_CLASS_INDEX=0         # anomaly di index 0 (training)
-      - ANOMALY_THRESHOLD=0.95
+      - ANOMALY_CLASS_INDEX=0       # anomaly di index 0 (training)
+      - ANOMALY_THRESHOLD=0.65
+      - ANOMALY_MIN_GAP=0
       - CONVERT_BGR2RGB=false         # training pakai BGR dari OpenCV
       - DEBUG_PRED=true
       # opsi sliding (abaikan jika uniform):
       - WINDOW_STRIDE=5
       - AGGREGATOR=mean
       - CONSECUTIVE_WINDOWS=0
+      - DEBUG_SAVE_OVERLAY=true
+      - DEBUG_SAVE_JSON=true
 
 
   # Database
