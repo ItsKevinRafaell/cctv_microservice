@@ -1,0 +1,29 @@
+logLevel: info
+
+# protokol input/output
+rtsp: yes
+rtmp: yes
+hls: yes
+hlsVariant: mpegts
+hlsSegmentDuration: 2s
+hlsSegmentCount: 3
+hlsAlwaysRemux: yes      # selalu remux ke HLS (praktis untuk browser)
+webrtc: yes              # aktifkan WebRTC (tidak perlu "webrtcServer")
+
+# (opsional) set alamat server WebRTC (default sudah OK)
+# webrtcAddress: :8889
+# webrtcAllowOrigin: "*"
+
+# (opsional) rekaman
+record: no
+recordPath: /data/%path/%Y-%m-%d_%H-%M-%S-%f
+recordFormat: fmp4
+
+# Paths (channel). Dengan "all:", kamu tidak perlu tambah manual per kamera
+paths:
+  all:
+    # Contoh kalau ingin proteksi:
+    # readUser: viewer
+    # readPass: viewerpass
+    # publishUser: pub
+    # publishPass: secret

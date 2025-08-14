@@ -99,6 +99,21 @@ services:
     networks:
       - cctv_network
 
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: mediamtx
+    networks:
+      - cctv_network
+    ports:
+      - "8554:8554"   # RTSP (TCP)
+      - "1935:1935"   # RTMP (TCP)
+      - "8888:8888"   # HLS/LL-HLS HTTP
+      - "8889:8889"   # WebRTC signaling (WS)
+      - "8189:8189/udp" # WebRTC media (UDP)
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml:ro
+      - mediamtx_data:/data
+
 # Definisikan network dan volume
 networks:
   cctv_network:
@@ -108,3 +123,4 @@ volumes:
   rabbitmq_data:
   minio_data:
   ingestion_uploads:
+  mediamtx_data:
