@@ -75,4 +75,35 @@ func Migrate(db *sql.DB) {
 		log.Fatalf("Gagal membuat tabel anomaly_reports: %v", err)
 	}
 	log.Println("   > Tabel 'anomaly_reports' siap digunakan.")
+
+	createRecordingsTable := `
+	CREATE TABLE IF NOT EXISTS recordings (
+	id          bigserial PRIMARY KEY,
+	camera_id   text NOT NULL,
+	started_at  timestamptz NOT NULL,
+	ended_at    timestamptz NOT NULL,
+	s3_key      text NOT NULL,
+	size_bytes  bigint,
+	created_at  timestamptz DEFAULT now()
+	);
+
+	-- unik per segmen per kamera
+	DO $$
+	BEGIN
+	IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'recordings_cam_start_uniq') THEN
+		CREATE UNIQUE INDEX recordings_cam_start_uniq ON recordings (camera_id, started_at);
+	END IF;
+	END$$;
+
+	-- indeks untuk range query
+	DO $$
+	BEGIN
+	IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'recordings_cam_time_idx') THEN
+		CREATE INDEX recordings_cam_time_idx ON recordings (camera_id, started_at);
+	END IF;
+	END$$;`
+	if _, err := db.Exec(createRecordingsTable); err != nil {
+		log.Fatalf("Gagal membuat tabel recordings: %v", err)
+	}
+	log.Println("   > Tabel 'recordings' siap digunakan.")
 }

@@ -11,22 +11,42 @@ services:
       - rabbitmq
     environment:
       - FIREBASE_CREDENTIALS=/app/creds/service-account.json
+      # ---- S3/MinIO untuk presign rekaman panjang ----
+      - MINIO_INTERNAL_ENDPOINT=http://minio:9000
+      - MINIO_PUBLIC_ENDPOINT=http://127.0.0.1:9000
+      - MINIO_PUBLIC_BASE_URL=http://127.0.0.1:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minio-secret-key
+      - MINIO_USE_PRESIGN=true
+      - ARCHIVE_BUCKET=video-archive
+      - PRESIGN_TTL=600           # detik
+      - SEGMENT_SECONDS=3600      # samakan dengan archiver
+      - APP_TZ=Asia/Jakarta
     volumes:
       - ./secrets/firebase-service-account.json:/app/creds/service-account.json:ro
 
   # Backend Penerima
   api_ingestion:
     build: ./cctv-ingestion-service
-    # !!!!! TAMBAHKAN BLOK INI !!!!!
     ports:
-      # Map port 8081 di laptop Anda ke port 8081 di dalam kontainer
       - "8081:8081"
     volumes:
       - ingestion_uploads:/app/uploads
-    networks:
-      - cctv_network
-    depends_on:
-      - rabbitmq
+    networks: [cctv_network]
+    depends_on: [rabbitmq, minio]
+    environment:
+      # endpoint internal = service name di compose
+      - MINIO_INTERNAL_ENDPOINT=http://minio:9000
+      # endpoint publik buat dibagikan ke UI (ubah ke domain/IP kamu kalau perlu)
+      - MINIO_PUBLIC_ENDPOINT=http://127.0.0.1:9000
+      - MINIO_PUBLIC_BASE_URL=http://127.0.0.1:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minio-secret-key
+      - MINIO_BUCKET=video-clips
+      - MINIO_USE_PRESIGN=true
+      - MINIO_PRESIGN_TTL=86400
+      # Rabbit URL (boleh biarkan default guest/guest)
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
 
   # AI Worker
   ai_worker:
@@ -114,6 +134,112 @@ services:
       - ./mediamtx.yml:/mediamtx.yml:ro
       - mediamtx_data:/data
 
+  archiver_cam1:
+    image: jrottenberg/ffmpeg:5.1-alpine
+    restart: unless-stopped
+    volumes:
+      - recordings:/recordings
+    networks: [cctv_network]
+    command:
+      - -hide_banner
+      - -loglevel
+      - info
+      - -rtsp_transport
+      - tcp
+      - -i
+      - rtsp://mediamtx:8554/cam1
+      - -c
+      - copy
+      - -f
+      - segment
+      - -segment_time
+      - "60"   # pakai 60 detik dulu untuk test cepat; nanti balikin ke 3600
+      - -reset_timestamps
+      - "1"
+      - -strftime
+      - "1"
+      - /recordings/cam1_%Y%m%d_%H%M%S.mp4   # ← tidak pakai subfolder
+
+
+
+
+  test_publisher_cam1:
+    image: jrottenberg/ffmpeg:5.1-alpine
+    restart: unless-stopped
+    depends_on: [mediamtx]
+    networks: [cctv_network]
+    command:
+      - -re
+      - -f
+      - lavfi
+      - -i
+      - testsrc=size=640x360:rate=25
+      - -f
+      - lavfi
+      - -i
+      - sine=frequency=1000:sample_rate=48000
+      - -c:v
+      - libx264
+      - -preset
+      - veryfast
+      - -tune
+      - zerolatency
+      - -pix_fmt
+      - yuv420p
+      - -profile:v
+      - main
+      - -g
+      - "50"
+      - -c:a
+      - aac
+      - -b:a
+      - 128k
+      - -f
+      - rtsp
+      - -rtsp_transport
+      - tcp
+      - rtsp://mediamtx:8554/cam1
+  # --- Mirror rekaman panjang ➜ MinIO setiap 30 detik ---
+  archive_sync:
+    image: bitnami/minio-client:latest
+    restart: unless-stopped
+    volumes:
+      - recordings:/recordings
+    environment:
+      MINIO_ALIAS: minio
+      MINIO_URL: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minio-secret-key
+    command: >
+      /bin/bash -lc "
+        /opt/bitnami/minio-client/bin/mc alias set ${MINIO_ALIAS} ${MINIO_URL} ${MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY} &&
+        /opt/bitnami/minio-client/bin/mc mb -p ${MINIO_ALIAS}/video-archive || true &&
+        /opt/bitnami/minio-client/bin/mc mirror --overwrite --remove --watch /recordings ${MINIO_ALIAS}/video-archive
+      "
+    depends_on:
+      - minio
+    networks:
+      - cctv_network
+
+
+  recording_indexer:
+    build: ./recording-indexer
+    restart: unless-stopped
+    environment:
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minio-secret-key
+      ARCHIVE_BUCKET: video-archive
+      POSTGRES_DSN: host=db port=5432 user=admin password=secret dbname=cctv_db sslmode=disable
+      SEGMENT_SECONDS: "60"
+      SCAN_INTERVAL_SEC: "30"
+    depends_on:
+      - db
+      - minio
+    networks:
+      - cctv_network
+
+
 # Definisikan network dan volume
 networks:
   cctv_network:
@@ -124,3 +250,4 @@ volumes:
   minio_data:
   ingestion_uploads:
   mediamtx_data:
+  recordings:
