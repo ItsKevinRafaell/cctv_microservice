@@ -4,6 +4,8 @@ import (
 	"cctv-main-backend/internal/anomaly"
 	"cctv-main-backend/internal/camera"
 	"cctv-main-backend/internal/company"
+	"cctv-main-backend/internal/handlers"
+	"cctv-main-backend/internal/storage"
 	"cctv-main-backend/internal/user"
 	"cctv-main-backend/pkg/database"
 	"cctv-main-backend/pkg/notifier"
@@ -12,6 +14,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
+	"time"
 )
 
 func main() {
@@ -51,6 +55,23 @@ func main() {
 	} else {
 		log.Println("Notifier: LOG (fallback)")
 	}
+
+	minioInternal := getEnv("MINIO_INTERNAL_ENDPOINT", "http://minio:9000")
+	minioPublic := getEnv("MINIO_PUBLIC_ENDPOINT", "http://127.0.0.1:9000")
+	access := getEnv("MINIO_ACCESS_KEY", "minioadmin")
+	secret := getEnv("MINIO_SECRET_KEY", "minio-secret-key")
+	publicBase := getEnv("MINIO_PUBLIC_BASE_URL", "http://127.0.0.1:9000")
+	usePresign := getEnv("MINIO_USE_PRESIGN", "true") == "true"
+	bucketArchive := getEnv("ARCHIVE_BUCKET", "video-archive")
+
+	s3u, err := storage.NewS3Util(minioInternal, minioPublic, access, secret, publicBase, usePresign, 24*time.Hour)
+	if err != nil {
+		log.Fatalf("init S3Util: %v", err)
+	}
+	if err := s3u.EnsureBucket(context.Background(), bucketArchive); err != nil {
+		log.Printf("ensure bucket %s: %v", bucketArchive, err)
+	}
+	recHandler := handlers.NewRecordingHandler(db, s3u, bucketArchive)
 
 	// services + handlers
 	anomalyService := anomaly.NewService(anomalyRepo, n) // <<< gunakan n di sini
@@ -108,6 +129,17 @@ func main() {
 	})
 
 	mux.HandleFunc("/api/cameras/", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		// /api/cameras/{id}/recordings  → GET daftar rekaman
+		if strings.HasSuffix(r.URL.Path, "/recordings") {
+			if r.Method != http.MethodGet {
+				http.Error(w, "Method not allowed for recordings", http.StatusMethodNotAllowed)
+				return
+			}
+			recHandler.ListRecordings(w, r) // handler yang kita buat sebelumnya
+			return
+		}
+
+		// /api/cameras/{id} → update/hapus kamera
 		switch r.Method {
 		case http.MethodPut:
 			cameraHandler.UpdateCamera(w, r)
@@ -139,4 +171,11 @@ func main() {
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
 		log.Fatal("Gagal memulai server:", err)
 	}
+}
+
+func getEnv(key, def string) string {
+	if val := os.Getenv(key); val != "" {
+		return val
+	}
+	return def
 }
