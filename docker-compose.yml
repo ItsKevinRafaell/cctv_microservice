@@ -11,6 +11,7 @@ services:
       - rabbitmq
     environment:
       - FIREBASE_CREDENTIALS=/app/creds/service-account.json
+      - PUSH_SERVICE_URL=http://push-service:8090
       # ---- S3/MinIO untuk presign rekaman panjang ----
       - MINIO_INTERNAL_ENDPOINT=http://minio:9000
       - MINIO_PUBLIC_ENDPOINT=http://127.0.0.1:9000
@@ -28,6 +29,7 @@ services:
   # Backend Penerima
   api_ingestion:
     build: ./cctv-ingestion-service
+    restart: unless-stopped
     ports:
       - "8081:8081"
     volumes:
@@ -233,11 +235,38 @@ services:
       POSTGRES_DSN: host=db port=5432 user=admin password=secret dbname=cctv_db sslmode=disable
       SEGMENT_SECONDS: "60"
       SCAN_INTERVAL_SEC: "30"
+      INDEXER_HTTP_ADDR: ":8091"
     depends_on:
       - db
       - minio
     networks:
       - cctv_network
+    ports:
+      - "8091:8091"
+
+  push-service:
+    build: ./cctv-push-service
+    ports:
+      - "8090:8090"
+    networks:
+      - cctv_network
+    environment:
+      - FIREBASE_CREDENTIALS=/app/creds/service-account.json
+    volumes:
+      - ./secrets/firebase-service-account.json:/app/creds/service-account.json:ro
+
+  archiver_manager:
+    image: jrottenberg/ffmpeg:5.1-alpine
+    restart: unless-stopped
+    networks: [cctv_network]
+    volumes:
+      - recordings:/recordings
+      - ./scripts:/app:ro
+    environment:
+      - SEGMENT_SECONDS=60
+      - CAMERA_LIST=cam1=rtsp://mediamtx:8554/cam1,cam2=rtsp://mediamtx:8554/cam2
+    # Override ffmpeg entrypoint so our shell script runs properly
+    entrypoint: ["/bin/sh", "/app/archiver_manager.sh"]
 
 
 # Definisikan network dan volume

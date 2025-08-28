@@ -1,16 +1,18 @@
 package main
 
 import (
-	"context"
-	"database/sql"
-	"fmt"
-	"log"
-	"os"
-	"regexp"
-	"strconv"
-	"time"
+    "context"
+    "database/sql"
+    "encoding/json"
+    "fmt"
+    "log"
+    "net/http"
+    "os"
+    "regexp"
+    "strconv"
+    "time"
 
-	_ "github.com/lib/pq"
+    _ "github.com/lib/pq"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awscfg "github.com/aws/aws-sdk-go-v2/config"
@@ -149,7 +151,27 @@ func main() {
 	}
 	defer db.Close()
 
-	log.Printf("recording-indexer start: bucket=%s, interval=%s, seg=%ds\n", bucket, interval, segSec)
+    log.Printf("recording-indexer start: bucket=%s, interval=%s, seg=%ds\n", bucket, interval, segSec)
+
+    // Optional: HTTP notify endpoint
+    httpAddr := os.Getenv("INDEXER_HTTP_ADDR") // e.g. :8091
+    if httpAddr != "" {
+        mux := http.NewServeMux()
+        mux.HandleFunc("/api/notify", func(w http.ResponseWriter, r *http.Request) {
+            if r.Method != "POST" { w.WriteHeader(405); return }
+            type req struct{ S3Key string `json:"s3_key"`; Size int64 `json:"size_bytes"` }
+            var q req
+            if err := json.NewDecoder(r.Body).Decode(&q); err != nil { w.WriteHeader(400); return }
+            cam, start, end, ok := parseKey(q.S3Key, time.Duration(segSec)*time.Second)
+            if !ok { w.WriteHeader(400); return }
+            if err := upsert(db, cam, start, end, q.S3Key, q.Size); err != nil { w.WriteHeader(500); return }
+            w.WriteHeader(204)
+        })
+        go func() {
+            log.Printf("indexer HTTP listen %s\n", httpAddr)
+            if err := http.ListenAndServe(httpAddr, mux); err != nil { log.Println("http error:", err) }
+        }()
+    }
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()

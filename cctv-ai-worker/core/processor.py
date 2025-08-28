@@ -77,6 +77,25 @@ class VideoProcessor:
         original_filename = task.get("original_filename", "")
         camera_id = int(task.get("camera_id", 0) or 0)
 
+        # Jika path lokal tidak tersedia, coba unduh dari URL presign
+        downloaded_tmp = None
+        if (not video_path or not os.path.exists(video_path)) and video_url:
+            try:
+                import tempfile, requests, shutil
+                tmp_dir = _ensure_dir("/app/uploads/tmp")
+                suffix = os.path.splitext(original_filename or "clip.mp4")[1] or ".mp4"
+                fd, tmp_path = tempfile.mkstemp(prefix="dl_", suffix=suffix, dir=tmp_dir)
+                os.close(fd)
+                print(f"[->] Mengunduh video dari presigned URL ke: {tmp_path}")
+                with requests.get(video_url, stream=True, timeout=60) as r:
+                    r.raise_for_status()
+                    with open(tmp_path, 'wb') as f:
+                        shutil.copyfileobj(r.raw, f)
+                video_path = tmp_path
+                downloaded_tmp = tmp_path
+            except Exception as e:
+                print(f"[!] Gagal mengunduh dari presigned URL: {e}")
+
         if not video_path or not os.path.exists(video_path):
             print("[!] 'video_path' tidak ada/invalid:", video_path)
             return
