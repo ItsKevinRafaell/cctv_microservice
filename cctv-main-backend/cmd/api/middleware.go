@@ -43,16 +43,17 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func RequireRole(role string, next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		claims, ok := r.Context().Value(auth.UserClaimsKey).(jwt.MapClaims)
-		if !ok {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-		if claims["role"] != role {
-			http.Error(w, "Forbidden (role)", http.StatusForbidden)
-			return
-		}
-		next(w, r)
-	}
+    return func(w http.ResponseWriter, r *http.Request) {
+        claims, ok := r.Context().Value(auth.UserClaimsKey).(jwt.MapClaims)
+        if !ok {
+            http.Error(w, "Unauthorized", http.StatusUnauthorized)
+            return
+        }
+        // Allow superadmin to access any protected route
+        if roleClaim, _ := claims["role"].(string); roleClaim != role && roleClaim != "superadmin" {
+            http.Error(w, "Forbidden (role)", http.StatusForbidden)
+            return
+        }
+        next(w, r)
+    }
 }

@@ -13,6 +13,9 @@ services:
       - FIREBASE_CREDENTIALS=/app/creds/service-account.json
       - PUSH_SERVICE_URL=http://push-service:8090
       - PUSH_SERVICE_SECRET=change-me-secret
+      # Seed a superadmin on startup (change these for first run)
+      - SUPERADMIN_EMAIL=superadmin@example.com
+      - SUPERADMIN_PASSWORD=ChangeMe123!
       # URL publik untuk Mediamtx (untuk dibagikan ke App)
       - MEDIAMTX_PUBLIC_HOST=100.100.229.113
       - MEDIAMTX_PUBLIC_HLS_PORT=8888
@@ -261,6 +264,18 @@ services:
       - PUSH_SERVICE_SECRET=change-me-secret
     volumes:
       - ./secrets/firebase-service-account.json:/app/creds/service-account.json:ro
+
+  app_admin_dashboard:
+    build: ./admin-dashboard
+    ports:
+      - "3000:3000"
+    networks:
+      - cctv_network
+    depends_on:
+      - api_main
+    environment:
+      - API_BASE_URL=http://api_main:8080
+      - NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8080
 
   archiver_manager:
     image: jrottenberg/ffmpeg:5.1-alpine

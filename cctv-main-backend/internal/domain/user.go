@@ -6,6 +6,6 @@ type User struct {
 	Password     string `json:"password"`
 	PasswordHash string
 	CompanyID    int64  `json:"company_id"`
-	Role         string `json:"role"`                // 'user' or 'company_admin'
+    Role         string `json:"role"`                // 'user' | 'company_admin' | 'superadmin'
 	FCMToken     string `json:"fcm_token,omitempty"` // Untuk menyimpan token FCM
 }

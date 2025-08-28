@@ -1,2 +1,5 @@
 /secrets/
 token.txt
+admin-dashboard/node_modules/
+admin-dashboard/.next/
+admin-dashboard/.vercel/

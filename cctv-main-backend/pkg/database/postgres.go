@@ -34,16 +34,16 @@ func Migrate(db *sql.DB) {
 	}
 	log.Println("   > Tabel 'companies' siap digunakan.")
 
-	createUsersTable := `
-	CREATE TABLE IF NOT EXISTS users (
-		id SERIAL PRIMARY KEY,
-		email VARCHAR(255) UNIQUE NOT NULL,
-		password_hash VARCHAR(255) NOT NULL,
-		company_id INTEGER REFERENCES companies(id) ON DELETE CASCADE,
-		role VARCHAR(50) NOT NULL DEFAULT 'user', -- 'user' atau 'company_admin'
-		fcm_token VARCHAR(255), -- Untuk menyimpan token FCM
-		created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-	);`
+    createUsersTable := `
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            company_id INTEGER REFERENCES companies(id) ON DELETE CASCADE,
+            role VARCHAR(50) NOT NULL DEFAULT 'user', -- 'user' | 'company_admin' | 'superadmin'
+            fcm_token VARCHAR(255), -- Untuk menyimpan token FCM
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        );`
 	if _, err := db.Exec(createUsersTable); err != nil {
 		log.Fatalf("Gagal membuat tabel users: %v", err)
 	}

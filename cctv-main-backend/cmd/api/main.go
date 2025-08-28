@@ -9,6 +9,7 @@ import (
 	"cctv-main-backend/internal/user"
 	"cctv-main-backend/pkg/database"
 	"cctv-main-backend/pkg/notifier"
+	"database/sql"
 	"context"
 	"fmt"
 	"log"
@@ -16,12 +17,17 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func main() {
-	db := database.NewConnection()
-	database.Migrate(db)
-	defer db.Close()
+    db := database.NewConnection()
+    database.Migrate(db)
+    defer db.Close()
+
+    // Seed optional superadmin if env provided
+    ensureSuperadmin(db)
 
 	mux := http.NewServeMux()
 
@@ -186,8 +192,56 @@ func main() {
 }
 
 func getEnv(key, def string) string {
-	if val := os.Getenv(key); val != "" {
-		return val
-	}
-	return def
+    if val := os.Getenv(key); val != "" {
+        return val
+    }
+    return def
+}
+
+// ensureSuperadmin creates or elevates a superadmin account if env vars are set
+func ensureSuperadmin(db *sql.DB) {
+    email := os.Getenv("SUPERADMIN_EMAIL")
+    password := os.Getenv("SUPERADMIN_PASSWORD")
+    if email == "" || password == "" {
+        return
+    }
+
+    // Check if user exists
+    var exists bool
+    err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE email=$1)", email).Scan(&exists)
+    if err != nil {
+        log.Println("seed superadmin check error:", err)
+        return
+    }
+    if exists {
+        // Elevate role to superadmin
+        if _, err := db.Exec("UPDATE users SET role='superadmin' WHERE email=$1", email); err != nil {
+            log.Println("seed superadmin elevate error:", err)
+        } else {
+            log.Println("Superadmin elevated:", email)
+        }
+        return
+    }
+
+    // Create a system company if not exists
+    var companyID int64
+    if err := db.QueryRow("SELECT id FROM companies WHERE name=$1", "System").Scan(&companyID); err != nil {
+        // create
+        if err := db.QueryRow("INSERT INTO companies(name) VALUES($1) RETURNING id", "System").Scan(&companyID); err != nil {
+            log.Println("create System company error:", err)
+            return
+        }
+    }
+
+    // Hash password and insert user
+    hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+    if err != nil {
+        log.Println("bcrypt error:", err)
+        return
+    }
+    if _, err := db.Exec("INSERT INTO users(email, password_hash, company_id, role) VALUES($1,$2,$3,$4)", email, string(hash), companyID, "superadmin"); err != nil {
+        log.Println("insert superadmin error:", err)
+        return
+    }
+    log.Println("Superadmin created:", email)
 }

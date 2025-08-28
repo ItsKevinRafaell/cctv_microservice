@@ -74,12 +74,12 @@ func (h *Handler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) UpdateUserRole(w http.ResponseWriter, r *http.Request) {
 	claims, _ := r.Context().Value(auth.UserClaimsKey).(jwt.MapClaims)
 	companyID, _ := claims["company_id"].(float64)
-	role, _ := claims["role"].(string)
+    role, _ := claims["role"].(string)
 
-	if role != "company_admin" {
-		http.Error(w, "Anda tidak punya izin untuk melakukan aksi ini", http.StatusForbidden)
-		return
-	}
+    if role != "company_admin" && role != "superadmin" {
+        http.Error(w, "Anda tidak punya izin untuk melakukan aksi ini", http.StatusForbidden)
+        return
+    }
 
 	parts := strings.Split(r.URL.Path, "/")
 	userID, _ := strconv.ParseInt(parts[len(parts)-1], 10, 64)
@@ -102,12 +102,12 @@ func (h *Handler) UpdateUserRole(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	claims, _ := r.Context().Value(auth.UserClaimsKey).(jwt.MapClaims)
 	companyID, _ := claims["company_id"].(float64)
-	role, _ := claims["role"].(string)
+    role, _ := claims["role"].(string)
 
-	if role != "company_admin" {
-		http.Error(w, "Anda tidak punya izin untuk melakukan aksi ini", http.StatusForbidden)
-		return
-	}
+    if role != "company_admin" && role != "superadmin" {
+        http.Error(w, "Anda tidak punya izin untuk melakukan aksi ini", http.StatusForbidden)
+        return
+    }
 
 	parts := strings.Split(r.URL.Path, "/")
 	userID, _ := strconv.ParseInt(parts[len(parts)-1], 10, 64)
