@@ -50,12 +50,13 @@ func (f *FCM) Send(report *domain.AnomalyReport) error {
 func (f *FCM) NotifyAnomaly(ctx context.Context, r *domain.AnomalyReport) error {
 	title := "Anomali Terdeteksi"
 	body := fmt.Sprintf("Kamera %d • %.0f%%", r.CameraID, r.Confidence*100)
-	data := map[string]string{
-		"camera_id":    fmt.Sprintf("%d", r.CameraID),
-		"confidence":   fmt.Sprintf("%.3f", r.Confidence),
-		"video_url":    r.VideoClipURL,
-		"anomaly_type": r.AnomalyType,
-	}
+    data := map[string]string{
+        "camera_id":    fmt.Sprintf("%d", r.CameraID),
+        "confidence":   fmt.Sprintf("%.3f", r.Confidence),
+        "video_url":    r.VideoClipURL,
+        "anomaly_type": r.AnomalyType,
+        "deeplink":     fmt.Sprintf("app://camera/%d/anomaly", r.CameraID),
+    }
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()

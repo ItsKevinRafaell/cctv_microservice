@@ -8,9 +8,10 @@ import (
 )
 
 type Service interface {
-	SaveReport(report *domain.AnomalyReport) error
-	FetchAllReportsByCompany(companyID int64) ([]domain.AnomalyReport, error)
-	ListRecent(companyID int64, limit int) ([]domain.AnomalyReport, error)
+    SaveReport(report *domain.AnomalyReport) error
+    FetchAllReportsByCompany(companyID int64) ([]domain.AnomalyReport, error)
+    ListRecent(companyID int64, limit int) ([]domain.AnomalyReport, error)
+    GetDetail(companyID, id int64) (*domain.AnomalyReport, error)
 }
 
 type service struct {
@@ -51,4 +52,8 @@ func (s *service) ListRecent(companyID int64, limit int) ([]domain.AnomalyReport
 		limit = 100
 	}
 	return s.repo.GetRecentReportsByCompany(companyID, limit)
+}
+
+func (s *service) GetDetail(companyID, id int64) (*domain.AnomalyReport, error) {
+    return s.repo.GetByIDForCompany(companyID, id)
 }

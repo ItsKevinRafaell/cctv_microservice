@@ -23,9 +23,10 @@ type requestPayload struct {
 
 type server struct {
     mc *messaging.Client
+    secret string
 }
 
-func newServer(credPath string) (*server, error) {
+func newServer(credPath, secret string) (*server, error) {
     ctx := context.Background()
     if credPath == "" {
         credPath = os.Getenv("FIREBASE_CREDENTIALS")
@@ -34,10 +35,16 @@ func newServer(credPath string) (*server, error) {
     if err != nil { return nil, err }
     mc, err := app.Messaging(ctx)
     if err != nil { return nil, err }
-    return &server{mc: mc}, nil
+    return &server{mc: mc, secret: secret}, nil
 }
 
 func (s *server) handleSend(w http.ResponseWriter, r *http.Request) {
+    if s.secret != "" {
+        if r.Header.Get("X-Push-Secret") != s.secret {
+            http.Error(w, "unauthorized", http.StatusUnauthorized)
+            return
+        }
+    }
     if r.Method != http.MethodPost {
         http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
         return
@@ -88,7 +95,7 @@ func main() {
     if cred == "" {
         log.Fatal("FIREBASE_CREDENTIALS wajib diisi untuk push-service")
     }
-    s, err := newServer(cred)
+    s, err := newServer(cred, os.Getenv("PUSH_SERVICE_SECRET"))
     if err != nil { log.Fatal(err) }
 
     mux := http.NewServeMux()
