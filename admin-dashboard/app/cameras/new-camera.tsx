@@ -1,12 +1,15 @@
 "use client"
 import { useState, useTransition } from 'react'
 
-export default function NewCamera() {
+type Company = { id: number; name: string }
+
+export default function NewCamera({ companies, selectedCompanyId }: { companies: Company[]; selectedCompanyId: string }) {
   const [pending, start] = useTransition()
   const [name, setName] = useState('')
   const [location, setLocation] = useState('')
   const [streamKey, setStreamKey] = useState('')
   const [rtsp, setRtsp] = useState('')
+  const [companyId, setCompanyId] = useState(selectedCompanyId || (companies[0]?.id?.toString() || ''))
   const [msg, setMsg] = useState<string | null>(null)
 
   async function create() {
@@ -15,7 +18,7 @@ export default function NewCamera() {
       const res = await fetch('/api/proxy/api/cameras', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, location, stream_key: streamKey, rtsp_source: rtsp }),
+        body: JSON.stringify({ name, location, stream_key: streamKey, rtsp_source: rtsp, company_id: companyId ? parseInt(companyId, 10) : undefined }),
       })
       if (res.ok) {
         setName(''); setLocation(''); setStreamKey(''); setRtsp('')
@@ -35,6 +38,11 @@ export default function NewCamera() {
         <input className="border rounded px-2 py-1" placeholder="Location" value={location} onChange={(e)=>setLocation(e.target.value)} />
         <input className="border rounded px-2 py-1" placeholder="Stream Key (optional)" value={streamKey} onChange={(e)=>setStreamKey(e.target.value)} />
         <input className="border rounded px-2 py-1" placeholder="RTSP Source (optional)" value={rtsp} onChange={(e)=>setRtsp(e.target.value)} />
+        <select className="border rounded px-2 py-1" value={companyId} onChange={(e)=>setCompanyId(e.target.value)}>
+          {companies.map((c)=> (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
       </div>
       <div className="mt-2">
         <button onClick={create} disabled={pending} className="px-3 py-1 rounded border">Create</button>
@@ -43,4 +51,3 @@ export default function NewCamera() {
     </div>
   )
 }
-

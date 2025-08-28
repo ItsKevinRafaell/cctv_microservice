@@ -22,13 +22,14 @@ func NewHandler(service Service) *Handler {
 }
 
 func (h *Handler) CreateCamera(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value(auth.UserClaimsKey).(jwt.MapClaims)
+    claims, ok := r.Context().Value(auth.UserClaimsKey).(jwt.MapClaims)
 	if !ok {
 		http.Error(w, "Gagal mengambil data pengguna dari token", http.StatusInternalServerError)
 		return
 	}
 
-	companyID, _ := claims["company_id"].(float64)
+    companyID, _ := claims["company_id"].(float64)
+    role, _ := claims["role"].(string)
 
     var camera domain.Camera
     if err := json.NewDecoder(r.Body).Decode(&camera); err != nil {
@@ -36,7 +37,12 @@ func (h *Handler) CreateCamera(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-	camera.CompanyID = int64(companyID)
+    // superadmin can specify target company_id in request body
+    if role == "superadmin" && camera.CompanyID != 0 {
+        // use provided
+    } else {
+        camera.CompanyID = int64(companyID)
+    }
 
     cameraID, err := h.service.RegisterCamera(&camera)
     if err != nil {
@@ -71,7 +77,15 @@ func (h *Handler) GetCameras(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Gagal mengambil data pengguna dari token", http.StatusInternalServerError)
 		return
 	}
-	companyID, _ := claims["company_id"].(float64)
+    companyID, _ := claims["company_id"].(float64)
+    role, _ := claims["role"].(string)
+    if role == "superadmin" {
+        if v := r.URL.Query().Get("company_id"); v != "" {
+            if id, err := strconv.ParseInt(v, 10, 64); err == nil {
+                companyID = float64(id)
+            }
+        }
+    }
 
     cameras, err := h.service.GetCamerasForCompany(int64(companyID))
     if err != nil {
@@ -112,8 +126,9 @@ func (h *Handler) UpdateCamera(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	id, _ := strconv.ParseInt(parts[len(parts)-1], 10, 64)
 
-	claims, _ := r.Context().Value(auth.UserClaimsKey).(jwt.MapClaims)
-	companyID, _ := claims["company_id"].(float64)
+    claims, _ := r.Context().Value(auth.UserClaimsKey).(jwt.MapClaims)
+    companyID, _ := claims["company_id"].(float64)
+    role, _ := claims["role"].(string)
 
     var camera domain.Camera
     if err := json.NewDecoder(r.Body).Decode(&camera); err != nil {
@@ -121,16 +136,26 @@ func (h *Handler) UpdateCamera(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-	camera.ID = id
-	camera.CompanyID = int64(companyID)
-
-    if err := h.service.UpdateCamera(&camera); err != nil {
-        if errors.Is(err, ErrStreamKeyConflict) {
-            http.Error(w, "stream_key sudah digunakan", http.StatusConflict)
+    camera.ID = id
+    if role == "superadmin" {
+        if err := h.service.UpdateCameraAdmin(&camera); err != nil {
+            if errors.Is(err, ErrStreamKeyConflict) {
+                http.Error(w, "stream_key sudah digunakan", http.StatusConflict)
+                return
+            }
+            http.Error(w, "Gagal memperbarui kamera", http.StatusInternalServerError)
             return
         }
-        http.Error(w, "Gagal memperbarui kamera", http.StatusInternalServerError)
-        return
+    } else {
+        camera.CompanyID = int64(companyID)
+        if err := h.service.UpdateCamera(&camera); err != nil {
+            if errors.Is(err, ErrStreamKeyConflict) {
+                http.Error(w, "stream_key sudah digunakan", http.StatusConflict)
+                return
+            }
+            http.Error(w, "Gagal memperbarui kamera", http.StatusInternalServerError)
+            return
+        }
     }
     w.WriteHeader(http.StatusOK)
     w.Write([]byte("Kamera berhasil diperbarui."))
@@ -140,13 +165,21 @@ func (h *Handler) DeleteCamera(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	id, _ := strconv.ParseInt(parts[len(parts)-1], 10, 64)
 
-	claims, _ := r.Context().Value(auth.UserClaimsKey).(jwt.MapClaims)
-	companyID, _ := claims["company_id"].(float64)
+    claims, _ := r.Context().Value(auth.UserClaimsKey).(jwt.MapClaims)
+    role, _ := claims["role"].(string)
 
-	if err := h.service.DeleteCamera(id, int64(companyID)); err != nil {
-		http.Error(w, "Gagal menghapus kamera", http.StatusInternalServerError)
-		return
-	}
+    if role == "superadmin" {
+        if err := h.service.DeleteCameraAdmin(id); err != nil {
+            http.Error(w, "Gagal menghapus kamera", http.StatusInternalServerError)
+            return
+        }
+    } else {
+        companyID, _ := claims["company_id"].(float64)
+        if err := h.service.DeleteCamera(id, int64(companyID)); err != nil {
+            http.Error(w, "Gagal menghapus kamera", http.StatusInternalServerError)
+            return
+        }
+    }
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Kamera berhasil dihapus."))
 }

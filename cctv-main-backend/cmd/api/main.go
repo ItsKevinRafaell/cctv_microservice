@@ -124,27 +124,27 @@ func main() {
     mux.HandleFunc("/api/anomalies/", authMiddleware(anomalyHandler.GetDetail))
 	mux.HandleFunc("/api/anomalies/recent", authMiddleware(anomalyHandler.GetRecent))
 
-	mux.HandleFunc("/api/companies", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodPost:
-			companyHandler.CreateCompany(w, r)
-		case http.MethodGet:
-			companyHandler.GetAllCompanies(w, r)
-		default:
-			http.Error(w, "Metode tidak diizinkan", http.StatusMethodNotAllowed)
-		}
-	})
+    mux.HandleFunc("/api/companies", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
+        switch r.Method {
+        case http.MethodPost:
+            RequireRole("superadmin", companyHandler.CreateCompany)(w, r)
+        case http.MethodGet:
+            RequireRole("superadmin", companyHandler.GetAllCompanies)(w, r)
+        default:
+            http.Error(w, "Metode tidak diizinkan", http.StatusMethodNotAllowed)
+        }
+    }))
 
-	mux.HandleFunc("/api/companies/", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodPut:
-			companyHandler.UpdateCompany(w, r)
-		case http.MethodDelete:
-			companyHandler.DeleteCompany(w, r)
-		default:
-			http.Error(w, "Metode tidak diizinkan", http.StatusMethodNotAllowed)
-		}
-	})
+    mux.HandleFunc("/api/companies/", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
+        switch r.Method {
+        case http.MethodPut:
+            RequireRole("superadmin", companyHandler.UpdateCompany)(w, r)
+        case http.MethodDelete:
+            RequireRole("superadmin", companyHandler.DeleteCompany)(w, r)
+        default:
+            http.Error(w, "Metode tidak diizinkan", http.StatusMethodNotAllowed)
+        }
+    }))
 
 	mux.HandleFunc("/api/cameras/", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		// /api/cameras/{id}/recordings  → GET daftar rekaman

@@ -59,8 +59,16 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
-	claims, _ := r.Context().Value(auth.UserClaimsKey).(jwt.MapClaims)
-	companyID, _ := claims["company_id"].(float64)
+    claims, _ := r.Context().Value(auth.UserClaimsKey).(jwt.MapClaims)
+    companyID, _ := claims["company_id"].(float64)
+    role, _ := claims["role"].(string)
+    if role == "superadmin" {
+        if v := r.URL.Query().Get("company_id"); v != "" {
+            if id, err := strconv.ParseInt(v, 10, 64); err == nil {
+                companyID = float64(id)
+            }
+        }
+    }
 
 	users, err := h.service.FindUsersByCompany(int64(companyID))
 	if err != nil {
@@ -72,8 +80,8 @@ func (h *Handler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UpdateUserRole(w http.ResponseWriter, r *http.Request) {
-	claims, _ := r.Context().Value(auth.UserClaimsKey).(jwt.MapClaims)
-	companyID, _ := claims["company_id"].(float64)
+    claims, _ := r.Context().Value(auth.UserClaimsKey).(jwt.MapClaims)
+    companyID, _ := claims["company_id"].(float64)
     role, _ := claims["role"].(string)
 
     if role != "company_admin" && role != "superadmin" {
@@ -84,12 +92,20 @@ func (h *Handler) UpdateUserRole(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	userID, _ := strconv.ParseInt(parts[len(parts)-1], 10, 64)
 
-	var reqBody map[string]string
-	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		http.Error(w, "Request body tidak valid", http.StatusBadRequest)
-		return
-	}
-	newRole := reqBody["role"]
+    var reqBody map[string]string
+    if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+        http.Error(w, "Request body tidak valid", http.StatusBadRequest)
+        return
+    }
+    newRole := reqBody["role"]
+    // superadmin dapat override company_id via body
+    if role == "superadmin" {
+        if s, ok := reqBody["company_id"]; ok && s != "" {
+            if id, err := strconv.ParseInt(s, 10, 64); err == nil {
+                companyID = float64(id)
+            }
+        }
+    }
 
 	if err := h.service.UpdateRole(userID, int64(companyID), newRole); err != nil {
 		http.Error(w, "Pengguna tidak ditemukan atau bukan bagian dari perusahaan Anda", http.StatusNotFound)
@@ -100,8 +116,8 @@ func (h *Handler) UpdateUserRole(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	claims, _ := r.Context().Value(auth.UserClaimsKey).(jwt.MapClaims)
-	companyID, _ := claims["company_id"].(float64)
+    claims, _ := r.Context().Value(auth.UserClaimsKey).(jwt.MapClaims)
+    companyID, _ := claims["company_id"].(float64)
     role, _ := claims["role"].(string)
 
     if role != "company_admin" && role != "superadmin" {
@@ -109,8 +125,16 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-	parts := strings.Split(r.URL.Path, "/")
-	userID, _ := strconv.ParseInt(parts[len(parts)-1], 10, 64)
+    parts := strings.Split(r.URL.Path, "/")
+    userID, _ := strconv.ParseInt(parts[len(parts)-1], 10, 64)
+    // superadmin dapat override company_id via query
+    if role == "superadmin" {
+        if v := r.URL.Query().Get("company_id"); v != "" {
+            if id, err := strconv.ParseInt(v, 10, 64); err == nil {
+                companyID = float64(id)
+            }
+        }
+    }
 
 	if err := h.service.Delete(userID, int64(companyID)); err != nil {
 		http.Error(w, "Pengguna tidak ditemukan atau bukan bagian dari perusahaan Anda", http.StatusNotFound)

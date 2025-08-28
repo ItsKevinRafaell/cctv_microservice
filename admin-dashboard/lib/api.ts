@@ -52,8 +52,14 @@ export type RecordingList = {
 
 export const api = {
   companies: async () => asArray<Company>(await get<any>(`/api/companies`).catch(() => [])),
-  users: async () => asArray<User>(await get<any>(`/api/users`).catch(() => [])),
-  cameras: async () => asArray<Camera>(await get<any>(`/api/cameras`).catch(() => [])),
+  users: async (companyId?: string) => {
+    const qs = companyId ? `?company_id=${encodeURIComponent(companyId)}` : ''
+    return asArray<User>(await get<any>(`/api/users${qs}`).catch(() => []))
+  },
+  cameras: async (companyId?: string) => {
+    const qs = companyId ? `?company_id=${encodeURIComponent(companyId)}` : ''
+    return asArray<Camera>(await get<any>(`/api/cameras${qs}`).catch(() => []))
+  },
   anomaliesRecent: async () => asArray<Anomaly>(await get<any>(`/api/anomalies/recent`).catch(() => [])),
   anomaly: (id: string) => get<Anomaly>(`/api/anomalies/${id}`),
   cameraRecordings: async (cameraId: string, params?: { from?: string; to?: string; presign?: boolean }) => {

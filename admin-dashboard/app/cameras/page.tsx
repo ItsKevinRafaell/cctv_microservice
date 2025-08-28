@@ -2,13 +2,19 @@ import { api } from '@/lib/api'
 import Link from 'next/link'
 import CamerasActions from './cameras-actions'
 import NewCamera from './new-camera'
+import CompanyFilter from './company-filter'
 
-export default async function CamerasPage() {
-  const cams = await api.cameras().catch(() => [])
+export default async function CamerasPage({ searchParams }: { searchParams?: { companyId?: string } }) {
+  const companyId = searchParams?.companyId
+  const [companies, cams] = await Promise.all([
+    api.companies().catch(() => []),
+    api.cameras(companyId).catch(() => []),
+  ])
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Cameras</h1>
-      <NewCamera />
+      <CompanyFilter companies={companies} selectedCompanyId={companyId || ''} />
+      <NewCamera companies={companies} selectedCompanyId={companyId || ''} />
       <div className="grid gap-3">
         {cams.length === 0 && <div className="text-sm text-gray-600">No cameras</div>}
         {cams.map((c) => (

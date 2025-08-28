@@ -16,6 +16,9 @@ type Repository interface {
     DeleteCamera(cameraID int64, companyID int64) error
     // NEW: ambil company_id berdasarkan camera_id (untuk FCM)
     GetCompanyIDByCameraID(ctx context.Context, cameraID int64) (int64, error)
+    // Admin variants (ignore company scope)
+    UpdateCameraAdmin(camera *domain.Camera) error
+    DeleteCameraAdmin(cameraID int64) error
 }
 
 type repository struct {
@@ -122,4 +125,15 @@ func (r *repository) GetCompanyIDByCameraID(ctx context.Context, cameraID int64)
 		return 0, err
 	}
 	return companyID, nil
+}
+
+func (r *repository) UpdateCameraAdmin(camera *domain.Camera) error {
+    query := `UPDATE cameras SET name = $1, location = $2, stream_key = COALESCE(NULLIF($3,''), stream_key), rtsp_source = $4 WHERE id = $5`
+    _, err := r.db.Exec(query, camera.Name, camera.Location, camera.StreamKey, camera.RTSPSource, camera.ID)
+    return err
+}
+
+func (r *repository) DeleteCameraAdmin(cameraID int64) error {
+    _, err := r.db.Exec(`DELETE FROM cameras WHERE id = $1`, cameraID)
+    return err
 }
