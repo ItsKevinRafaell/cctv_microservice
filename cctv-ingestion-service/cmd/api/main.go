@@ -1,14 +1,15 @@
 package main
 
 import (
-	"cctv-ingestion-service/internal/ingest"
-	"cctv-ingestion-service/pkg/mq"
-	"cctv-ingestion-service/pkg/uploader"
-	"fmt"
-	"log"
-	"net/http"
-	"os"
-	"strconv"
+    "cctv-ingestion-service/internal/ingest"
+    "cctv-ingestion-service/pkg/mq"
+    "cctv-ingestion-service/pkg/uploader"
+    "fmt"
+    "log"
+    "net/http"
+    "os"
+    "strconv"
+    "time"
 )
 
 func getEnv(key, def string) string {
@@ -39,10 +40,22 @@ func main() {
 		log.Fatalf("Init S3 Uploader error: %v", err)
 	}
 
-	rabbitPublisher, err := mq.NewRabbitMQPublisher("amqp://guest:guest@rabbitmq:5672/")
-	if err != nil {
-		log.Fatalf("Gagal terhubung ke RabbitMQ: %v", err)
-	}
+    rabbitURL := getEnv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/")
+    // Retry connect to RabbitMQ to tolerate startup ordering
+    var rabbitPublisher *mq.RabbitMQPublisher
+    for attempt := 1; attempt <= 30; attempt++ {
+        rp, err := mq.NewRabbitMQPublisher(rabbitURL)
+        if err == nil {
+            rabbitPublisher = rp
+            log.Printf("✅ Terhubung ke RabbitMQ pada percobaan %d", attempt)
+            break
+        }
+        log.Printf("RabbitMQ belum siap (percobaan %d/30): %v", attempt, err)
+        time.Sleep(2 * time.Second)
+    }
+    if rabbitPublisher == nil {
+        log.Fatalf("Gagal terhubung ke RabbitMQ setelah beberapa percobaan")
+    }
 	defer rabbitPublisher.Close()
 	log.Println("✅ Berhasil terhubung ke RabbitMQ!")
 

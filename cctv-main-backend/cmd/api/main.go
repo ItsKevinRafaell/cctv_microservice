@@ -31,30 +31,39 @@ func main() {
 	companyRepo := company.NewRepository(db)
 	cameraRepo := camera.NewRepository(db)
 
-	// notifier: FCM jika kredensial ada, else log
-	var n notifier.Notifier
-	if cred := os.Getenv("FIREBASE_CREDENTIALS"); cred != "" {
-		fcm, err := notifier.NewFCM(context.Background(), cred)
-		if err != nil {
-			log.Println("FCM init error, fallback ke log:", err)
-			n = notifier.NewLogNotifier()
-		} else {
-			fcm.GetAdminTokens = userRepo.GetAdminFCMTokensByCompany
-			fcm.GetCompanyIDByCameraID = cameraRepo.GetCompanyIDByCameraID
-			fcm.DeleteToken = userRepo.DeleteFCMTokenByValue
-			fcm.UseTopic = false // kirim langsung ke semua admin company
-			fcm.TopicPrefix = "alerts"
-			n = fcm // <-- penting!
-		}
-	} else {
-		n = notifier.NewLogNotifier()
-	}
-
-	if _, ok := n.(*notifier.FCM); ok {
-		log.Println("Notifier: FCM (direct-to-token)")
-	} else {
-		log.Println("Notifier: LOG (fallback)")
-	}
+    // notifier: jika ada PUSH_SERVICE_URL gunakan HTTPNotifier, kalau tidak fallback FCM/log
+    var n notifier.Notifier
+    if base := os.Getenv("PUSH_SERVICE_URL"); base != "" {
+        httpN, err := notifier.NewHTTPNotifier(base)
+        if err != nil {
+            log.Println("HTTPNotifier init error, fallback ke FCM/log:", err)
+        } else {
+            httpN.GetAdminTokens = userRepo.GetAdminFCMTokensByCompany
+            httpN.GetCompanyIDByCameraID = cameraRepo.GetCompanyIDByCameraID
+            n = httpN
+            log.Println("Notifier: HTTP push-service")
+        }
+    }
+    if n == nil {
+        if cred := os.Getenv("FIREBASE_CREDENTIALS"); cred != "" {
+            fcm, err := notifier.NewFCM(context.Background(), cred)
+            if err != nil {
+                log.Println("FCM init error, fallback ke log:", err)
+                n = notifier.NewLogNotifier()
+            } else {
+                fcm.GetAdminTokens = userRepo.GetAdminFCMTokensByCompany
+                fcm.GetCompanyIDByCameraID = cameraRepo.GetCompanyIDByCameraID
+                fcm.DeleteToken = userRepo.DeleteFCMTokenByValue
+                fcm.UseTopic = false
+                fcm.TopicPrefix = "alerts"
+                n = fcm
+                log.Println("Notifier: FCM (direct-to-token)")
+            }
+        } else {
+            n = notifier.NewLogNotifier()
+            log.Println("Notifier: LOG (fallback)")
+        }
+    }
 
 	minioInternal := getEnv("MINIO_INTERNAL_ENDPOINT", "http://minio:9000")
 	minioPublic := getEnv("MINIO_PUBLIC_ENDPOINT", "http://127.0.0.1:9000")
