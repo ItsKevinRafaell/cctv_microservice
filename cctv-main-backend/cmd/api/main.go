@@ -34,7 +34,8 @@ func main() {
     // notifier: jika ada PUSH_SERVICE_URL gunakan HTTPNotifier, kalau tidak fallback FCM/log
     var n notifier.Notifier
     if base := os.Getenv("PUSH_SERVICE_URL"); base != "" {
-        httpN, err := notifier.NewHTTPNotifier(base)
+        secret := os.Getenv("PUSH_SERVICE_SECRET")
+        httpN, err := notifier.NewHTTPNotifierWithSecret(base, secret)
         if err != nil {
             log.Println("HTTPNotifier init error, fallback ke FCM/log:", err)
         } else {
@@ -80,11 +81,12 @@ func main() {
 	if err := s3u.EnsureBucket(context.Background(), bucketArchive); err != nil {
 		log.Printf("ensure bucket %s: %v", bucketArchive, err)
 	}
-	recHandler := handlers.NewRecordingHandler(db, s3u, bucketArchive)
+    recHandler := handlers.NewRecordingHandler(db, s3u, bucketArchive)
+    clipsBucket := getEnv("MINIO_BUCKET", "video-clips")
 
 	// services + handlers
-	anomalyService := anomaly.NewService(anomalyRepo, n) // <<< gunakan n di sini
-	anomalyHandler := anomaly.NewHandler(anomalyService)
+    anomalyService := anomaly.NewService(anomalyRepo, n)
+    anomalyHandler := anomaly.NewHandler(anomalyService, s3u, clipsBucket)
 
 	userService := user.NewService(userRepo)
 	userHandler := user.NewHandler(userService)
@@ -112,7 +114,8 @@ func main() {
 	}))
 
 	mux.HandleFunc("/api/report-anomaly", anomalyHandler.CreateReport)
-	mux.HandleFunc("/api/anomalies", authMiddleware(anomalyHandler.GetAllReports))
+    mux.HandleFunc("/api/anomalies", authMiddleware(anomalyHandler.GetAllReports))
+    mux.HandleFunc("/api/anomalies/", authMiddleware(anomalyHandler.GetDetail))
 	mux.HandleFunc("/api/anomalies/recent", authMiddleware(anomalyHandler.GetRecent))
 
 	mux.HandleFunc("/api/companies", func(w http.ResponseWriter, r *http.Request) {

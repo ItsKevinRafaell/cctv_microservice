@@ -55,12 +55,26 @@ func Migrate(db *sql.DB) {
 		name VARCHAR(255) NOT NULL,
 		location VARCHAR(255),
 		company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+		stream_key TEXT,
+		rtsp_source TEXT,
 		created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 	);`
 	if _, err := db.Exec(createCamerasTable); err != nil {
 		log.Fatalf("Gagal membuat tabel cameras: %v", err)
 	}
 	log.Println("   > Tabel 'cameras' siap digunakan.")
+
+	// Tambahkan kolom bila belum ada pada lingkungan lama
+	_, _ = db.Exec(`ALTER TABLE cameras ADD COLUMN IF NOT EXISTS stream_key TEXT`)
+	_, _ = db.Exec(`ALTER TABLE cameras ADD COLUMN IF NOT EXISTS rtsp_source TEXT`)
+	// Unique index untuk stream_key agar tidak bentrok
+	_, _ = db.Exec(`
+	DO $$
+	BEGIN
+	IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'cameras_stream_key_uniq') THEN
+		CREATE UNIQUE INDEX cameras_stream_key_uniq ON cameras (stream_key);
+	END IF;
+	END$$;`)
 
 	createAnomalyTable := `
 	CREATE TABLE IF NOT EXISTS anomaly_reports (
