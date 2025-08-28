@@ -88,7 +88,7 @@ func (h *RecordingHandler) ListRecordings(w http.ResponseWriter, r *http.Request
 	defer rows.Close()
 
 	presign := r.URL.Query().Get("presign") == "1"
-	var items []RecordingItem
+    items := make([]RecordingItem, 0)
 	for rows.Next() {
 		var key string
 		var size int64

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Skeleton } from '@/components/ui/skeleton'
-import { apiBaseUrl, authHeaderFromCookie, decodeJwt, getToken } from '@/lib/auth'
+import { apiBaseUrl, authHeaderFromCookie, decodeJwt, getToken, uploadBaseUrl } from '@/lib/auth'
 
 async function fetchHealth(path: string) {
   try {
@@ -12,9 +12,17 @@ async function fetchHealth(path: string) {
 }
 
 export default async function Home() {
+  async function fetchUploadHealth(path: string) {
+    try {
+      const res = await fetch(`${uploadBaseUrl()}${path}`, { headers: authHeaderFromCookie(), cache: 'no-store' })
+      return { ok: res.ok, status: res.status }
+    } catch {
+      return { ok: false, status: 0 }
+    }
+  }
   const [main, ingestion] = await Promise.all([
     fetchHealth('/healthz').catch(() => ({ ok: false, status: 0 })),
-    fetchHealth('/healthz').catch(() => ({ ok: false, status: 0 })),
+    fetchUploadHealth('/healthz').catch(() => ({ ok: false, status: 0 })),
   ])
 
   const token = getToken()
@@ -63,4 +71,3 @@ export default async function Home() {
     </div>
   )
 }
-

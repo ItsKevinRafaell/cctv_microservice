@@ -88,7 +88,7 @@ func (h *Handler) GetCameras(w http.ResponseWriter, r *http.Request) {
         RTSPURL    string `json:"rtsp_url,omitempty"`
         WebRTCURL  string `json:"webrtc_url,omitempty"`
     }
-    var out []CameraResp
+    out := make([]CameraResp, 0)
     for _, c := range cameras {
         sk := c.StreamKey
         if sk == "" {

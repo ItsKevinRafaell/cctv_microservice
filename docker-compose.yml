@@ -275,6 +275,7 @@ services:
       - api_main
     environment:
       - API_BASE_URL=http://api_main:8080
+      - UPLOAD_BASE_URL=http://api_ingestion:8081
       - NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8080
 
   archiver_manager:

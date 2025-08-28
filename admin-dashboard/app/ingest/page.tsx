@@ -1,17 +1,31 @@
-import { Skeleton } from '@/components/ui/skeleton'
+"use client"
+import { useState } from 'react'
 
 export default function IngestPage() {
+  const [file, setFile] = useState<File | null>(null)
+  const [msg, setMsg] = useState<string | null>(null)
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setMsg(null)
+    if (!file) { setMsg('Pilih file dulu'); return }
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch('/api/proxy-ingest/ingest/video', { method: 'POST', body: fd })
+    setMsg(res.ok ? 'Upload OK' : `Gagal (${res.status})`)
+  }
+
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Upload / Ingestion Test</h1>
-      <div className="space-y-2">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-56" />
-      </div>
+      <form onSubmit={onSubmit} className="space-y-3">
+        <input type="file" accept="video/*" onChange={(e)=>setFile(e.target.files?.[0]||null)} />
+        <button type="submit" className="px-3 py-2 rounded bg-black text-white text-sm">Upload</button>
+        {msg && <div className="text-sm text-gray-700">{msg}</div>}
+      </form>
       <div className="border rounded p-4 text-sm text-gray-600">
-        Form upload akan diarahkan ke /ingest/video melalui proxy.
+        Form ini mengirim ke ingestion service via proxy `/api/proxy-ingest/ingest/video`.
       </div>
     </div>
   )
 }
-

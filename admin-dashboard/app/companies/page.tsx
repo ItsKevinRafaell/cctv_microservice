@@ -1,16 +1,23 @@
-import { Skeleton } from '@/components/ui/skeleton'
+import { api } from '@/lib/api'
 
-export default function CompaniesPage() {
+export default async function CompaniesPage() {
+  const companies = await api.companies().catch(() => [])
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Companies</h1>
-      <Skeleton className="h-10 w-48" />
-      <div className="grid gap-2">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-10 w-full" />
+      <div className="border rounded divide-y">
+        {companies.length === 0 && (
+          <div className="p-3 text-sm text-gray-600">No companies</div>
+        )}
+        {companies.map((c) => (
+          <div key={c.id} className="p-3 flex items-center justify-between">
+            <div>
+              <div className="font-medium">{c.name}</div>
+              <div className="text-xs text-gray-500">ID: {c.id} {c.created_at ? `• ${new Date(c.created_at).toLocaleString()}` : ''}</div>
+            </div>
+          </div>
         ))}
       </div>
     </div>
   )
 }
-

@@ -42,7 +42,7 @@ func (r *repository) GetAllReportsByCompany(companyID int64) ([]domain.AnomalyRe
 	}
 	defer rows.Close()
 
-	var reports []domain.AnomalyReport
+    reports := make([]domain.AnomalyReport, 0)
 	for rows.Next() {
 		var report domain.AnomalyReport
 		// Sesuaikan Scan untuk membaca kolom baru
@@ -71,7 +71,7 @@ func (r *repository) GetRecentReportsByCompany(companyID int64, limit int) ([]do
 	}
 	defer rows.Close()
 
-	var reports []domain.AnomalyReport
+    reports := make([]domain.AnomalyReport, 0)
 	for rows.Next() {
 		var report domain.AnomalyReport
 		if err := rows.Scan(&report.ID, &report.CameraID, &report.AnomalyType, &report.Confidence, &report.VideoClipURL, &report.ReportedAt); err != nil {

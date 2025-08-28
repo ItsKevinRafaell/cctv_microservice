@@ -51,7 +51,7 @@ func (r *repository) GetUsersByCompanyID(companyID int64) ([]domain.User, error)
 	}
 	defer rows.Close()
 
-	var users []domain.User
+    users := make([]domain.User, 0)
 	for rows.Next() {
 		var u domain.User
 		if err := rows.Scan(&u.ID, &u.Email, &u.Role, &u.CompanyID); err != nil {

@@ -37,3 +37,6 @@ export function apiBaseUrl(): string {
   return process.env.API_BASE_URL || 'http://localhost:8080'
 }
 
+export function uploadBaseUrl(): string {
+  return process.env.UPLOAD_BASE_URL || apiBaseUrl()
+}

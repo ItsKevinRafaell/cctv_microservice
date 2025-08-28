@@ -54,7 +54,7 @@ func (r *repository) GetCamerasByCompanyID(companyID int64) ([]domain.Camera, er
 	}
 	defer rows.Close()
 
-	var cameras []domain.Camera
+    cameras := make([]domain.Camera, 0)
 	for rows.Next() {
 		var cam domain.Camera
         if err := rows.Scan(&cam.ID, &cam.Name, &cam.Location, &cam.StreamKey, &cam.RTSPSource, &cam.CompanyID, &cam.CreatedAt); err != nil {
