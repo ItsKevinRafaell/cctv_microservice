@@ -12,6 +12,9 @@ type Repository interface {
     GetUsersByCompanyID(companyID int64) ([]domain.User, error)
     GetUserRoleByCompany(userID, companyID int64) (string, error)
     UpdateUserRole(userID, companyID int64, role string) error
+    UpdateUserEmail(userID, companyID int64, email string) error
+    UpdateUserPassword(userID, companyID int64, passwordHash string) error
+    UpdateUserName(userID, companyID int64, name string) error
     DeleteUser(userID, companyID int64) error
     UpdateFCMToken(userID int64, fcmToken string) error
     GetAdminFCMTokensByCompany(ctx context.Context, companyID int64) ([]string, error)
@@ -39,14 +42,22 @@ func (r *repository) GetUserByEmail(email string) (*domain.User, error) {
 }
 
 func (r *repository) CreateUser(user *domain.User) error {
-	query := `INSERT INTO users (email, password_hash, company_id, role) VALUES ($1, $2, $3, $4)`
-	_, err := r.db.Exec(query, user.Email, user.PasswordHash, user.CompanyID, user.Role)
-	return err
+    // company_id can be NULL when creating global superadmin
+    if user.CompanyID == 0 {
+        _, err := r.db.Exec(`INSERT INTO users (email, password_hash, company_id, role, display_name) VALUES ($1, $2, NULL, $3, $4)`,
+            user.Email, user.PasswordHash, user.Role, user.Name,
+        )
+        return err
+    }
+    _, err := r.db.Exec(`INSERT INTO users (email, password_hash, company_id, role, display_name) VALUES ($1, $2, $3, $4, $5)`,
+        user.Email, user.PasswordHash, user.CompanyID, user.Role, user.Name,
+    )
+    return err
 }
 
 func (r *repository) GetUsersByCompanyID(companyID int64) ([]domain.User, error) {
-	query := `SELECT id, email, role, company_id FROM users WHERE company_id = $1 ORDER BY id ASC`
-	rows, err := r.db.Query(query, companyID)
+    query := `SELECT id, email, role, company_id, COALESCE(display_name,'') as name FROM users WHERE company_id = $1 ORDER BY id ASC`
+    rows, err := r.db.Query(query, companyID)
 	if err != nil {
 		return nil, err
 	}
@@ -55,12 +66,12 @@ func (r *repository) GetUsersByCompanyID(companyID int64) ([]domain.User, error)
     users := make([]domain.User, 0)
 	for rows.Next() {
 		var u domain.User
-		if err := rows.Scan(&u.ID, &u.Email, &u.Role, &u.CompanyID); err != nil {
-			return nil, err
-		}
-		users = append(users, u)
-	}
-	return users, nil
+        if err := rows.Scan(&u.ID, &u.Email, &u.Role, &u.CompanyID, &u.Name); err != nil {
+            return nil, err
+        }
+        users = append(users, u)
+    }
+    return users, nil
 }
 
 func (r *repository) GetUserRoleByCompany(userID, companyID int64) (string, error) {
@@ -83,6 +94,27 @@ func (r *repository) UpdateUserRole(userID, companyID int64, role string) error 
 		return sql.ErrNoRows
 	}
 	return nil
+}
+
+func (r *repository) UpdateUserEmail(userID, companyID int64, email string) error {
+    result, err := r.db.Exec(`UPDATE users SET email = $1 WHERE id = $2 AND (company_id = $3 OR (company_id IS NULL AND $3 = 0))`, email, userID, companyID)
+    if err != nil { return err }
+    if ra, _ := result.RowsAffected(); ra == 0 { return sql.ErrNoRows }
+    return nil
+}
+
+func (r *repository) UpdateUserPassword(userID, companyID int64, passwordHash string) error {
+    result, err := r.db.Exec(`UPDATE users SET password_hash = $1 WHERE id = $2 AND (company_id = $3 OR (company_id IS NULL AND $3 = 0))`, passwordHash, userID, companyID)
+    if err != nil { return err }
+    if ra, _ := result.RowsAffected(); ra == 0 { return sql.ErrNoRows }
+    return nil
+}
+
+func (r *repository) UpdateUserName(userID, companyID int64, name string) error {
+    result, err := r.db.Exec(`UPDATE users SET display_name = $1 WHERE id = $2 AND (company_id = $3 OR (company_id IS NULL AND $3 = 0))`, name, userID, companyID)
+    if err != nil { return err }
+    if ra, _ := result.RowsAffected(); ra == 0 { return sql.ErrNoRows }
+    return nil
 }
 
 func (r *repository) DeleteUser(userID, companyID int64) error {

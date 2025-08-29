@@ -8,4 +8,5 @@ type User struct {
     CompanyID    int64  `json:"company_id"`
     Role         string `json:"role"`                // 'user' | 'company_admin' | 'superadmin'
     FCMToken     string `json:"fcm_token,omitempty"` // Untuk menyimpan token FCM
+    Name         string `json:"name,omitempty"`
 }

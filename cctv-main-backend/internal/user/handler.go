@@ -52,13 +52,15 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
     // Validasi peran pembuat
     switch callerRole {
     case "superadmin":
-        // superadmin bebas set company_id; wajib ada company_id valid
+        // superadmin: jika tidak memilih company_id, hanya boleh membuat superadmin global (company_id NULL)
         if user.CompanyID == 0 {
-            http.Error(w, "company_id wajib diisi", http.StatusBadRequest)
-            return
-        }
-        if user.Role == "" {
-            user.Role = "user"
+            if user.Role == "" { user.Role = "superadmin" }
+            if user.Role != "superadmin" {
+                http.Error(w, "Tanpa company, hanya boleh membuat superadmin", http.StatusBadRequest)
+                return
+            }
+        } else {
+            if user.Role == "" { user.Role = "user" }
         }
     case "company_admin":
         // company_admin hanya boleh membuat role 'user' di perusahaannya sendiri
@@ -119,10 +121,9 @@ func (h *Handler) UpdateUserRole(w http.ResponseWriter, r *http.Request) {
         return
     }
     newRole := reqBody["role"]
-    if newRole == "" {
-        http.Error(w, "role wajib diisi", http.StatusBadRequest)
-        return
-    }
+    newEmail := reqBody["email"]
+    newPassword := reqBody["password"]
+    newName := reqBody["name"]
     // superadmin dapat override company_id via body
     if role == "superadmin" {
         if s, ok := reqBody["company_id"]; ok && s != "" {
@@ -144,13 +145,33 @@ func (h *Handler) UpdateUserRole(w http.ResponseWriter, r *http.Request) {
             return
         }
     }
-
-    if err := h.service.UpdateRole(userID, int64(companyID), newRole); err != nil {
-        http.Error(w, "Pengguna tidak ditemukan atau bukan bagian dari perusahaan Anda", http.StatusNotFound)
-        return
+    // Apply updates selectively
+    if newRole != "" {
+        if err := h.service.UpdateRole(userID, int64(companyID), newRole); err != nil {
+            http.Error(w, "Pengguna tidak ditemukan atau bukan bagian dari perusahaan Anda", http.StatusNotFound)
+            return
+        }
     }
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Peran pengguna berhasil diperbarui."))
+    if newEmail != "" {
+        if err := h.service.UpdateEmail(userID, int64(companyID), newEmail); err != nil {
+            http.Error(w, "Gagal memperbarui email", http.StatusBadRequest)
+            return
+        }
+    }
+    if newPassword != "" {
+        if err := h.service.UpdatePassword(userID, int64(companyID), newPassword); err != nil {
+            http.Error(w, "Gagal memperbarui password", http.StatusBadRequest)
+            return
+        }
+    }
+    if newName != "" {
+        if err := h.service.UpdateName(userID, int64(companyID), newName); err != nil {
+            http.Error(w, "Gagal memperbarui nama", http.StatusBadRequest)
+            return
+        }
+    }
+    w.WriteHeader(http.StatusOK)
+    w.Write([]byte("Pengguna berhasil diperbarui."))
 }
 
 func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {

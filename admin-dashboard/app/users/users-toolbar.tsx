@@ -1,6 +1,6 @@
 "use client"
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 type Company = { id: number; name: string }
 type Role = 'superadmin' | 'company_admin' | 'user'
@@ -22,6 +22,13 @@ export default function UsersToolbar({ companies, selectedCompanyId, role }: { c
       : (companyId || '')
   }, [selectedCompanyId, companyId])
 
+  // Enforce: superadmin without selected company can only create superadmin
+  useEffect(() => {
+    if (role === 'superadmin' && (!selectedCompanyId || selectedCompanyId.length === 0)) {
+      setNewUserRole('superadmin')
+    }
+  }, [role, selectedCompanyId])
+
   function onFilterChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const id = e.target.value
     const params = new URLSearchParams(search.toString())
@@ -33,8 +40,8 @@ export default function UsersToolbar({ companies, selectedCompanyId, role }: { c
     e.preventDefault()
     setMsg(null)
     const payload: any = { email, password, role: newUserRole }
-    if (role === 'superadmin') {
-      // Only superadmin may explicitly set company_id
+    if (role === 'superadmin' && effectiveCompanyId) {
+      // Only superadmin may explicitly set company_id when a company is selected
       payload.company_id = parseInt(effectiveCompanyId, 10)
     }
     const res = await fetch('/api/proxy/api/register', {
@@ -80,10 +87,19 @@ export default function UsersToolbar({ companies, selectedCompanyId, role }: { c
         <div>
           <label className="block text-xs">Role</label>
           {role === 'superadmin' ? (
-            <select className="select w-full" value={newUserRole} onChange={(e)=>setNewUserRole(e.target.value as any)}>
-              <option value="user">user</option>
-              <option value="company_admin">company_admin</option>
-              <option value="superadmin">superadmin</option>
+            <select
+              className="select w-full"
+              value={(selectedCompanyId ? newUserRole : 'superadmin')}
+              onChange={(e)=>setNewUserRole(e.target.value as any)}
+            >
+              {selectedCompanyId ? (
+                <>
+                  <option value="user">user</option>
+                  <option value="company_admin">company_admin</option>
+                </>
+              ) : (
+                <option value="superadmin">superadmin</option>
+              )}
             </select>
           ) : (
             // company_admin and user may only create basic users

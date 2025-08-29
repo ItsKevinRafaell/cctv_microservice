@@ -18,7 +18,7 @@ function asArray<T>(val: any): T[] {
 }
 
 export type Company = { id: number; name: string; created_at?: string }
-export type User = { id: number; email: string; role: string; company_id: number }
+export type User = { id: number; email: string; role: string; company_id: number; name?: string }
 export type Camera = {
   id: number
   name: string

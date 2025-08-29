@@ -34,7 +34,7 @@ func Migrate(db *sql.DB) {
 	}
 	log.Println("   > Tabel 'companies' siap digunakan.")
 
-    createUsersTable := `
+	createUsersTable := `
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
             email VARCHAR(255) UNIQUE NOT NULL,
@@ -48,6 +48,9 @@ func Migrate(db *sql.DB) {
 		log.Fatalf("Gagal membuat tabel users: %v", err)
 	}
 	log.Println("   > Tabel 'users' siap digunakan.")
+
+	// Optional column for display name
+	_, _ = db.Exec(`ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name VARCHAR(255)`)
 
 	createCamerasTable := `
 	CREATE TABLE IF NOT EXISTS cameras (
