@@ -23,14 +23,13 @@ export default function NewCompany() {
     })
   }
   return (
-    <div className="border rounded p-3 text-sm">
+    <div className="card text-sm">
       <div className="font-medium mb-2">Add Company</div>
       <div className="flex gap-2">
-        <input className="border rounded px-2 py-1 flex-1" placeholder="Company name" value={name} onChange={(e)=>setName(e.target.value)} />
-        <button onClick={create} disabled={pending} className="px-3 py-1 border rounded">Create</button>
+        <input className="input flex-1" placeholder="Company name" value={name} onChange={(e)=>setName(e.target.value)} />
+        <button onClick={create} disabled={pending} className="btn btn-primary">Create</button>
         {msg && <span className="text-gray-600">{msg}</span>}
       </div>
     </div>
   )
 }
-

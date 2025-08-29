@@ -5,7 +5,7 @@ export default async function AnomaliesPage() {
   const items = await api.anomaliesRecent().catch(() => [])
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Anomalies</h1>
+      <h1 className="title">Anomalies</h1>
       <div className="divide-y border rounded">
         {items.length === 0 && <div className="p-3 text-sm text-gray-600">No recent anomalies</div>}
         {items.map((a) => (

@@ -5,3 +5,14 @@
 html, body, :root { height: 100%; }
 body { @apply bg-white text-gray-900; }
 
+/* Navy theme helpers */
+@layer components {
+  .btn { @apply px-3 py-2 rounded transition-colors; }
+  .btn-primary { @apply bg-[#153063] hover:bg-[#193873] text-white border border-[#1d3f80]; }
+  .btn-outline { @apply border border-[#1d3f80] text-[#153063] hover:bg-[#f1f5ff]; }
+  .btn-danger { @apply border border-red-200 bg-red-50 hover:bg-red-100 text-red-700; }
+  .input { @apply border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#153063] focus:border-[#153063]; }
+  .select { @apply border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#153063] focus:border-[#153063]; }
+  .card { @apply border rounded p-3 shadow-sm; }
+  .title { @apply text-xl font-semibold text-[#0b1b33]; }
+}

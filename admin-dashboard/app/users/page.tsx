@@ -1,17 +1,27 @@
 import { api, User } from '@/lib/api'
+import { decodeJwt, getToken } from '@/lib/auth'
 import UsersActions from './users-actions'
 import UsersToolbar from './users-toolbar'
 
 export default async function UsersPage({ searchParams }: { searchParams?: { companyId?: string } }) {
   const companyId = searchParams?.companyId
-  const [companies, users] = await Promise.all([
-    api.companies().catch(() => []),
-    api.users(companyId).catch(() => []),
-  ])
+  const token = getToken()
+  const me = decodeJwt(token)
+  const role = (me?.role as 'superadmin' | 'company_admin' | 'user' | undefined) || 'user'
+
+  const companies = await api.companies().catch(() => [])
+  // Determine which companyId should be used for filtering and form defaults
+  const effectiveCompanyId = role === 'superadmin' ? (companyId || '') : ''
+
+  const users = await api.users(effectiveCompanyId || undefined).catch(() => [])
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Users</h1>
-      <UsersToolbar companies={companies} selectedCompanyId={companyId || ''} />
+      <h1 className="title">Users</h1>
+      <UsersToolbar
+        role={role}
+        companies={companies}
+        selectedCompanyId={effectiveCompanyId}
+      />
       <div className="border rounded divide-y">
         {users.length === 0 && <div className="p-3 text-sm text-gray-600">No users</div>}
         {users.map((u) => (

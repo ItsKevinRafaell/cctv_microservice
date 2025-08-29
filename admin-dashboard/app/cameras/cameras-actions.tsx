@@ -39,18 +39,17 @@ export default function CamerasActions({ camera }: { camera: Cam }) {
   return (
     <div className="border rounded p-2 text-xs flex flex-col gap-2">
       <div className="flex gap-2">
-        <input className="border rounded px-2 py-1 flex-1" value={name} onChange={(e)=>setName(e.target.value)} placeholder="Name" />
-        <input className="border rounded px-2 py-1 flex-1" value={location} onChange={(e)=>setLocation(e.target.value)} placeholder="Location" />
+        <input className="input flex-1 py-1" value={name} onChange={(e)=>setName(e.target.value)} placeholder="Name" />
+        <input className="input flex-1 py-1" value={location} onChange={(e)=>setLocation(e.target.value)} placeholder="Location" />
       </div>
       <div className="flex gap-2">
-        <input className="border rounded px-2 py-1 flex-1" value={streamKey} onChange={(e)=>setStreamKey(e.target.value)} placeholder="Stream Key (optional)" />
+        <input className="input flex-1 py-1" value={streamKey} onChange={(e)=>setStreamKey(e.target.value)} placeholder="Stream Key (optional)" />
       </div>
       <div className="flex gap-2">
-        <button onClick={update} disabled={pending} className="px-2 py-1 rounded border">Save</button>
-        <button onClick={remove} disabled={pending} className="px-2 py-1 rounded border text-red-600">Delete</button>
+        <button onClick={update} disabled={pending} className="btn btn-outline py-1">Save</button>
+        <button onClick={remove} disabled={pending} className="btn btn-danger py-1">Delete</button>
         {msg && <span className="text-gray-600">{msg}</span>}
       </div>
     </div>
   )
 }
-

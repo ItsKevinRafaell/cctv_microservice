@@ -28,7 +28,7 @@ export default function UsersActions({ user }: { user: User }) {
     <div className="flex items-center gap-2">
       <span className="text-xs text-gray-600">Role:</span>
       <select
-        className="border rounded px-2 py-1 text-sm"
+        className="select text-sm"
         value={role}
         onChange={(e) => updateRole(e.target.value)}
         disabled={pending}
@@ -37,8 +37,7 @@ export default function UsersActions({ user }: { user: User }) {
         <option value="company_admin">company_admin</option>
         <option value="superadmin">superadmin</option>
       </select>
-      <button onClick={removeUser} disabled={pending} className="text-red-600 text-xs border px-2 py-1 rounded">Delete</button>
+      <button onClick={removeUser} disabled={pending} className="btn btn-danger text-xs">Delete</button>
     </div>
   )
 }
-

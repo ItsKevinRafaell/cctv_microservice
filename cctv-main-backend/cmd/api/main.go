@@ -103,8 +103,9 @@ func main() {
 	cameraService := camera.NewService(cameraRepo)
 	cameraHandler := camera.NewHandler(cameraService)
 
-	// routes (sama seperti punyamu)
-	mux.HandleFunc("/api/register", userHandler.Register)
+    // routes (sama seperti punyamu)
+    // Protect register: only authenticated callers can create users (enforced per-role in handler)
+    mux.HandleFunc("/api/register", authMiddleware(userHandler.Register))
 	mux.HandleFunc("/api/login", userHandler.Login)
 	mux.HandleFunc("/api/users", authMiddleware(userHandler.GetAllUsers))
 	mux.HandleFunc("/api/users/fcm-token", authMiddleware(userHandler.UpdateFCMToken))

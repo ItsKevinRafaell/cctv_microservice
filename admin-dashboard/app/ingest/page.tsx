@@ -17,13 +17,13 @@ export default function IngestPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Upload / Ingestion Test</h1>
+      <h1 className="title">Upload / Ingestion Test</h1>
       <form onSubmit={onSubmit} className="space-y-3">
-        <input type="file" accept="video/*" onChange={(e)=>setFile(e.target.files?.[0]||null)} />
-        <button type="submit" className="px-3 py-2 rounded bg-black text-white text-sm">Upload</button>
+        <input className="input" type="file" accept="video/*" onChange={(e)=>setFile(e.target.files?.[0]||null)} />
+        <button type="submit" className="btn btn-primary text-sm">Upload</button>
         {msg && <div className="text-sm text-gray-700">{msg}</div>}
       </form>
-      <div className="border rounded p-4 text-sm text-gray-600">
+      <div className="card text-sm text-gray-600">
         Form ini mengirim ke ingestion service via proxy `/api/proxy-ingest/ingest/video`.
       </div>
     </div>

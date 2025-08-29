@@ -38,21 +38,42 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
-	var user domain.User
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, "Request body tidak valid", http.StatusBadRequest)
-		return
-	}
+    var user domain.User
+    if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+        http.Error(w, "Request body tidak valid", http.StatusBadRequest)
+        return
+    }
 
-	if user.Role == "" {
-		user.Role = "user"
-	}
+    // Ambil role dan company dari JWT (endpoint ini sekarang protected)
+    claims, _ := r.Context().Value(auth.UserClaimsKey).(jwt.MapClaims)
+    callerRole, _ := claims["role"].(string)
+    callerCompanyID, _ := claims["company_id"].(float64)
 
-	err := h.service.Register(&user)
-	if err != nil {
-		http.Error(w, "Email sudah terdaftar atau terjadi kesalahan lain", http.StatusConflict)
-		return
-	}
+    // Validasi peran pembuat
+    switch callerRole {
+    case "superadmin":
+        // superadmin bebas set company_id; wajib ada company_id valid
+        if user.CompanyID == 0 {
+            http.Error(w, "company_id wajib diisi", http.StatusBadRequest)
+            return
+        }
+        if user.Role == "" {
+            user.Role = "user"
+        }
+    case "company_admin":
+        // company_admin hanya boleh membuat role 'user' di perusahaannya sendiri
+        user.Role = "user"
+        user.CompanyID = int64(callerCompanyID)
+    default:
+        http.Error(w, "Anda tidak punya izin untuk melakukan aksi ini", http.StatusForbidden)
+        return
+    }
+
+    err := h.service.Register(&user)
+    if err != nil {
+        http.Error(w, "Email sudah terdaftar atau terjadi kesalahan lain", http.StatusConflict)
+        return
+    }
 
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte("User berhasil didaftarkan untuk perusahaan terkait."))

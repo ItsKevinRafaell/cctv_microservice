@@ -27,14 +27,13 @@ export function CompanyRow({ c }: { c: { id: number; name: string; created_at?: 
     <div className="p-3 flex items-center justify-between">
       <div>
         <div className="text-xs text-gray-500">ID: {c.id} {c.created_at ? `• ${new Date(c.created_at).toLocaleString()}` : ''}</div>
-        <input className="border rounded px-2 py-1 text-sm" value={name} onChange={(e)=>setName(e.target.value)} />
+        <input className="input text-sm" value={name} onChange={(e)=>setName(e.target.value)} />
       </div>
       <div className="flex gap-2">
-        <button onClick={save} disabled={pending} className="px-2 py-1 border rounded text-sm">Save</button>
-        <button onClick={remove} disabled={pending} className="px-2 py-1 border rounded text-sm text-red-600">Delete</button>
+        <button onClick={save} disabled={pending} className="btn btn-outline text-sm">Save</button>
+        <button onClick={remove} disabled={pending} className="btn btn-danger text-sm">Delete</button>
         {msg && <span className="text-xs text-gray-600">{msg}</span>}
       </div>
     </div>
   )
 }
-

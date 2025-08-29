@@ -4,7 +4,7 @@ export default async function AnomalyDetailPage({ params }: { params: { id: stri
   const a = await api.anomaly(params.id)
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Anomaly #{a.id}</h1>
+      <h1 className="title">Anomaly #{a.id}</h1>
       <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-1 text-sm">
           <div><span className="text-gray-500">Type:</span> {a.anomaly_type}</div>

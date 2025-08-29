@@ -1,8 +1,10 @@
 "use client"
 import Link from 'next/link'
+import { useEffect, useMemo, useState } from 'react'
 import { usePathname } from 'next/navigation'
+import { routeRoleMap, type Role } from '@/lib/roles'
 
-const links = [
+const allLinks = [
   { href: '/', label: 'Status' },
   { href: '/companies', label: 'Companies' },
   { href: '/users', label: 'Users' },
@@ -14,25 +16,49 @@ const links = [
 
 export function Navbar() {
   const pathname = usePathname()
+  const [role, setRole] = useState<Role | undefined>(undefined)
+
+  useEffect(() => {
+    let aborted = false
+    fetch('/api/auth/me').then(async (r) => {
+      if (!r.ok) return
+      const j = await r.json().catch(() => null)
+      if (!aborted) setRole(j?.role as Role)
+    }).catch(() => {})
+    return () => { aborted = true }
+  }, [])
+
+  const links = useMemo(() => {
+    if (!role) return [] as typeof allLinks
+    return allLinks.filter((l) => {
+      const match = routeRoleMap.find((r) => l.href === r.prefix)
+      if (!match) return true
+      return match.roles.includes(role)
+    })
+  }, [role])
+
+  // Hide navbar on login route (after all hooks are called to keep hook order stable)
+  if (pathname.startsWith('/login')) return null
+
   return (
-    <header className="border-b">
+    <header className="border-b bg-[#0b1b33] text-white">
       <div className="max-w-6xl mx-auto p-3 flex items-center justify-between">
-        <div className="font-semibold">CCTV Admin</div>
-        <nav className="flex gap-4 text-sm">
+        <div className="font-semibold tracking-wide">CCTV Admin</div>
+        <nav className="flex gap-1 text-sm">
           {links.map((l) => (
             <Link
               key={l.href}
               href={l.href}
               className={
-                "px-2 py-1 rounded hover:bg-gray-100 " +
-                (pathname === l.href ? "bg-gray-100 font-medium" : "")
+                "px-3 py-1 rounded hover:bg-[#11254a] " +
+                (pathname === l.href ? "bg-[#122a55] font-medium" : "")
               }
             >
               {l.label}
             </Link>
           ))}
           <form action="/api/auth/logout" method="post">
-            <button className="px-2 py-1 rounded bg-red-50 hover:bg-red-100 text-red-700 border border-red-200">
+            <button className="ml-2 px-3 py-1 rounded bg-[#153063] hover:bg-[#193873] text-white border border-[#1d3f80]">
               Logout
             </button>
           </form>
@@ -41,4 +67,3 @@ export function Navbar() {
     </header>
   )
 }
-

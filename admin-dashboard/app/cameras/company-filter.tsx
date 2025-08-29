@@ -15,7 +15,7 @@ export default function CompanyFilter({ companies, selectedCompanyId }: { compan
   return (
     <div className="flex items-center gap-2 text-sm">
       <span>Company:</span>
-      <select className="border rounded px-2 py-1" value={selectedCompanyId} onChange={onChange}>
+      <select className="select" value={selectedCompanyId} onChange={onChange}>
         <option value="">(select)</option>
         {companies.map((c)=> (
           <option key={c.id} value={c.id}>{c.name}</option>
@@ -24,4 +24,3 @@ export default function CompanyFilter({ companies, selectedCompanyId }: { compan
     </div>
   )
 }
-
