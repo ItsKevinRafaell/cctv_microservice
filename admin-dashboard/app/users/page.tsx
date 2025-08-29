@@ -1,6 +1,7 @@
 import { api, User } from '@/lib/api'
 import { decodeJwt, getToken } from '@/lib/auth'
 import UsersActions from './users-actions'
+import PageHeader from '@/components/page-header'
 import UsersToolbar from './users-toolbar'
 
 export default async function UsersPage({ searchParams }: { searchParams?: { companyId?: string } }) {
@@ -16,7 +17,7 @@ export default async function UsersPage({ searchParams }: { searchParams?: { com
   const users = await api.users(effectiveCompanyId || undefined).catch(() => [])
   return (
     <div className="space-y-4">
-      <h1 className="title">Users</h1>
+      <PageHeader title="Users" />
       <UsersToolbar
         role={role}
         companies={companies}

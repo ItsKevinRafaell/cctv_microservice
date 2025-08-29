@@ -1,6 +1,7 @@
 "use client"
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
+import { useToast } from '@/components/toast'
 
 type Company = { id: number; name: string }
 type Role = 'superadmin' | 'company_admin' | 'user'
@@ -8,6 +9,7 @@ type Role = 'superadmin' | 'company_admin' | 'user'
 export default function UsersToolbar({ companies, selectedCompanyId, role }: { companies: Company[]; selectedCompanyId: string; role: Role }) {
   const router = useRouter()
   const search = useSearchParams()
+  const { notify } = useToast()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   // Local company selection is only used when no company is selected above
@@ -38,7 +40,6 @@ export default function UsersToolbar({ companies, selectedCompanyId, role }: { c
 
   async function createUser(e: React.FormEvent) {
     e.preventDefault()
-    setMsg(null)
     const payload: any = { email, password, role: newUserRole }
     if (role === 'superadmin' && effectiveCompanyId) {
       // Only superadmin may explicitly set company_id when a company is selected
@@ -49,7 +50,7 @@ export default function UsersToolbar({ companies, selectedCompanyId, role }: { c
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
-    if (res.ok) { setMsg('Created'); setEmail(''); setPassword('') } else { setMsg(`Failed (${res.status})`) }
+    if (res.ok) { setEmail(''); setPassword(''); notify('User created'); router.refresh() } else { notify(`Create failed (${res.status})`, 'error') }
   }
 
   return (
@@ -107,8 +108,9 @@ export default function UsersToolbar({ companies, selectedCompanyId, role }: { c
           )}
         </div>
         <div>
-          <button className="btn btn-primary" type="submit">Create User</button>
-          {msg && <span className="ml-2 text-xs text-gray-600">{msg}</span>}
+          <button className="btn btn-primary flex items-center gap-2" type="submit">
+            <span>Create User</span>
+          </button>
         </div>
       </form>
     </div>

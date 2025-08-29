@@ -1,11 +1,15 @@
 "use client"
 import { useMemo, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/toast'
 
 type Company = { id: number; name: string }
 type Role = 'superadmin' | 'company_admin' | 'user'
 
 export default function NewCamera({ companies, selectedCompanyId, role }: { companies: Company[]; selectedCompanyId: string; role: Role }) {
   const [pending, start] = useTransition()
+  const router = useRouter()
+  const { notify } = useToast()
   const [name, setName] = useState('')
   const [location, setLocation] = useState('')
   const [streamKey, setStreamKey] = useState('')
@@ -38,10 +42,10 @@ export default function NewCamera({ companies, selectedCompanyId, role }: { comp
       })
       if (res.ok) {
         setName(''); setLocation(''); setStreamKey(''); setRtsp('')
-        setMsg('Created')
-        setTimeout(() => window.location.reload(), 700)
+        notify('Camera created')
+        router.refresh()
       } else {
-        setMsg(`Failed (${res.status})`)
+        notify(`Create failed (${res.status})`, 'error')
       }
     })
   }
@@ -63,8 +67,10 @@ export default function NewCamera({ companies, selectedCompanyId, role }: { comp
         ) : null}
       </div>
       <div className="mt-2">
-        <button onClick={create} disabled={pending} className="btn btn-primary">Create</button>
-        {msg && <span className="ml-2 text-gray-600">{msg}</span>}
+        <button onClick={create} disabled={pending} className="btn btn-primary flex items-center gap-2">
+          {pending && <span className="inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+          <span>Create</span>
+        </button>
       </div>
     </div>
   )

@@ -1,10 +1,10 @@
 import './globals.css'
 import type { Metadata } from 'next'
-import { Navbar } from '@/components/navbar'
 import { Suspense } from 'react'
+import AppShell from '@/components/app-shell'
 
 export const metadata: Metadata = {
-  title: 'CCTV Admin Dashboard',
+  title: 'Anomeye Dashboard',
   description: 'Admin dashboard for CCTV microservices',
 }
 
@@ -13,9 +13,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <Suspense fallback={null}>
-          <Navbar />
+          <AppShell>{children}</AppShell>
         </Suspense>
-        <main className="max-w-6xl mx-auto p-4">{children}</main>
       </body>
     </html>
   )

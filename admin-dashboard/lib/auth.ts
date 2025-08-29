@@ -40,3 +40,13 @@ export function apiBaseUrl(): string {
 export function uploadBaseUrl(): string {
   return process.env.UPLOAD_BASE_URL || apiBaseUrl()
 }
+
+// Optional: URL for push notification service
+export function pushBaseUrl(): string | undefined {
+  return process.env.PUSH_BASE_URL || process.env.PUSH_SERVICE_URL || undefined
+}
+
+// Optional: URL for Media server (e.g., MediaMTX)
+export function mediaBaseUrl(): string | undefined {
+  return process.env.MEDIA_BASE_URL || process.env.MEDIAMTX_URL || undefined
+}

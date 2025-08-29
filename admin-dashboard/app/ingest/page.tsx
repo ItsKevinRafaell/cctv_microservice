@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState } from 'react'
+import PageHeader from '@/components/page-header'
 
 export default function IngestPage() {
   const [file, setFile] = useState<File | null>(null)
@@ -28,7 +29,7 @@ export default function IngestPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="title">Upload / Ingestion Test</h1>
+      <PageHeader title="Ingest" />
       {(role === 'superadmin' || role === 'company_admin') ? (
         <form onSubmit={onSubmit} className="space-y-3">
           <input className="input" type="file" accept="video/*" onChange={(e)=>setFile(e.target.files?.[0]||null)} />

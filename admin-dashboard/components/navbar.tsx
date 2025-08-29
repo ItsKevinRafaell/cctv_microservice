@@ -50,7 +50,7 @@ export function Navbar() {
   return (
     <header className="border-b bg-[#0b1b33] text-white">
       <div className="max-w-6xl mx-auto p-3 flex items-center justify-between">
-        <div className="font-semibold tracking-wide">CCTV Admin</div>
+        <div className="font-semibold tracking-wide">Anomeye</div>
         <nav className="flex gap-1 text-sm">
           {links.map((l) => (
             <Link

@@ -1,8 +1,12 @@
 "use client"
 import { useState, useTransition } from 'react'
 import type { User } from '@/lib/api'
+import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/toast'
 
 export default function UsersActions({ user, viewerRole, selectedCompanyId }: { user: User; viewerRole: 'superadmin' | 'company_admin' | 'user'; selectedCompanyId?: string }) {
+  const router = useRouter()
+  const { notify } = useToast()
   const [pending, startTransition] = useTransition()
   const [role, setRole] = useState(user.role)
   const [email, setEmail] = useState(user.email)
@@ -25,15 +29,15 @@ export default function UsersActions({ user, viewerRole, selectedCompanyId }: { 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
-      if (res.ok) setRole(next)
+      if (res.ok) { setRole(next); notify('User updated'); router.refresh() } else { notify(`Update failed (${res.status})`, 'error') }
     })
   }
 
   async function removeUser() {
     startTransition(async () => {
       const qs = (viewerRole === 'superadmin' && selectedCompanyId) ? `?company_id=${encodeURIComponent(selectedCompanyId)}` : ''
-      await fetch(`/api/proxy/api/users/${user.id}${qs}`, { method: 'DELETE' })
-      window.location.reload()
+      const r = await fetch(`/api/proxy/api/users/${user.id}${qs}`, { method: 'DELETE' })
+      if (r.ok) { notify('User deleted'); router.refresh() } else { notify(`Delete failed (${r.status})`, 'error') }
     })
   }
 
@@ -81,7 +85,7 @@ export default function UsersActions({ user, viewerRole, selectedCompanyId }: { 
       if (password) body.password = password
       if (viewerRole === 'superadmin' && selectedCompanyId) body.company_id = selectedCompanyId
       const res = await fetch(`/api/proxy/api/users/${user.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-      if (res.ok) { setPassword(''); setOpen(false) }
+      if (res.ok) { setPassword(''); setOpen(false); notify('User updated'); router.refresh() } else { notify(`Update failed (${res.status})`, 'error') }
     })
   }
 
@@ -116,7 +120,10 @@ export default function UsersActions({ user, viewerRole, selectedCompanyId }: { 
               </div>
               <div className="mt-4 flex justify-end gap-2">
                 <button className="btn" onClick={()=>setOpen(false)}>Cancel</button>
-                <button className="btn btn-primary" disabled={pending || !canEdit} onClick={save}>Save</button>
+                <button className="btn btn-primary flex items-center gap-2" disabled={pending || !canEdit} onClick={save}>
+                  {pending && <span className="inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                  <span>Save</span>
+                </button>
               </div>
               {viewerRole==='superadmin' && !selectedCompanyId && (
                 <div className="mt-2 text-[11px] text-gray-500">Pilih company terlebih dahulu untuk edit.</div>

@@ -1,6 +1,7 @@
 import { api } from '@/lib/api'
 import { decodeJwt, getToken } from '@/lib/auth'
 import Link from 'next/link'
+import PageHeader from '@/components/page-header'
 import CamerasActions from './cameras-actions'
 import NewCamera from './new-camera'
 import CompanyFilter from './company-filter'
@@ -14,7 +15,7 @@ export default async function CamerasPage({ searchParams }: { searchParams?: { c
   const cams = await api.cameras(companyId || undefined).catch(() => [])
   return (
     <div className="space-y-4">
-      <h1 className="title">Cameras</h1>
+      <PageHeader title="Cameras" />
       {role === 'superadmin' && (
         <>
           <CompanyFilter companies={companies} selectedCompanyId={companyId || ''} />

@@ -11,14 +11,18 @@ import (
 	"cctv-main-backend/pkg/notifier"
 	"database/sql"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"net"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
+    "golang.org/x/sys/unix"
 )
 
 func main() {
@@ -183,6 +187,123 @@ func main() {
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
+	})
+
+	// Aggregated health report for dashboard
+	mux.HandleFunc("/api/health/report", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		defer cancel()
+
+		resp := map[string]any{}
+
+		// DB ping
+		dbOK := db.PingContext(ctx) == nil
+		resp["database"] = map[string]any{"ok": dbOK}
+
+		// S3 buckets
+		s3 := map[string]any{}
+		archiveOK := false
+		clipsOK := false
+		if s3u != nil {
+			if err := s3u.HeadBucketOnly(ctx, bucketArchive); err == nil { archiveOK = true }
+			if err := s3u.HeadBucketOnly(ctx, clipsBucket); err == nil { clipsOK = true }
+		}
+		s3["archive_bucket"] = archiveOK
+		s3["clips_bucket"] = clipsOK
+		s3["ok"] = archiveOK && clipsOK
+		resp["s3"] = s3
+
+		// External services
+		type extRes struct{ Ok bool `json:"ok"`; Status int `json:"status"` }
+		probe := func(url string, method string) extRes {
+			if url == "" { return extRes{Ok: false, Status: 0} }
+			req, _ := http.NewRequestWithContext(ctx, method, url, nil)
+			res, err := http.DefaultClient.Do(req)
+			if err != nil { return extRes{Ok: false, Status: 0} }
+			defer res.Body.Close()
+			return extRes{Ok: res.StatusCode > 0 && res.StatusCode < 600, Status: res.StatusCode}
+		}
+		ingestBase := getEnv("UPLOAD_BASE_URL", "")
+		pushBase := getEnv("PUSH_SERVICE_URL", "")
+		mediaBase := getEnv("MEDIAMTX_URL", "")
+
+		ing := extRes{Ok: false, Status: 0}
+		if ingestBase != "" { ing = probe(ingestBase+"/healthz", http.MethodGet) }
+		resp["ingestion"] = ing
+
+		ps := extRes{Ok: false, Status: 0}
+		if pushBase != "" { ps = probe(pushBase+"/send", http.MethodOptions) }
+		resp["push_service"] = ps
+
+		ms := extRes{Ok: false, Status: 0}
+		if mediaBase != "" { ms = probe(mediaBase, http.MethodGet) }
+		resp["media_server"] = ms
+
+		// RabbitMQ (optional): try TCP dial to host:port of RABBITMQ_URL
+		rmq := map[string]any{"ok": false}
+		if amqp := getEnv("RABBITMQ_URL", ""); amqp != "" {
+			// crude parse: amqp://user:pass@host:port/vhost
+			hostport := ""
+			if strings.Contains(amqp, "@") {
+				parts := strings.SplitN(amqp, "@", 2)
+				hostPart := parts[1]
+				// strip scheme leftovers
+				if idx := strings.Index(hostPart, "/"); idx >= 0 { hostPart = hostPart[:idx] }
+				hostport = hostPart
+			}
+			if hostport == "" {
+				// fallback: remove scheme
+				x := strings.TrimPrefix(amqp, "amqp://")
+				if i := strings.Index(x, "/"); i >= 0 { x = x[:i] }
+				hostport = x
+			}
+			conn, err := net.DialTimeout("tcp", hostport, 1500*time.Millisecond)
+			if err == nil {
+				_ = conn.Close()
+				rmq["ok"] = true
+			}
+		}
+		resp["rabbitmq"] = rmq
+
+		// System snapshot: memory and disk
+		var msnap runtime.MemStats
+		runtime.ReadMemStats(&msnap)
+		resp["system"] = map[string]any{
+			"goroutines": runtime.NumGoroutine(),
+			"mem_alloc": msnap.Alloc,
+			"mem_sys": msnap.Sys,
+		}
+		var sfs unix.Statfs_t
+		if err := unix.Statfs("/", &sfs); err == nil {
+			resp["disk"] = map[string]any{
+				"total": sfs.Blocks * uint64(sfs.Bsize),
+				"free": sfs.Bavail * uint64(sfs.Bsize),
+			}
+		}
+
+		// Build info from env
+		resp["build"] = map[string]string{
+			"version": getEnv("BUILD_VERSION", ""),
+			"commit":  getEnv("GIT_SHA", ""),
+			"service": "cctv-main-backend",
+		}
+
+		// Optional S3 write test (safe small object)
+		writeOK := false
+		if s3u != nil {
+			key := fmt.Sprintf(".health/%d.txt", time.Now().UnixNano())
+			if err := s3u.PutObject(ctx, bucketArchive, key, []byte("ok")); err == nil {
+				_ = s3u.DeleteObject(ctx, bucketArchive, key)
+				writeOK = true
+			}
+		}
+		if s3m, ok := resp["s3"].(map[string]any); ok {
+			s3m["write_ok"] = writeOK
+			s3m["ok"] = (s3m["ok"] == true) && writeOK
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
 	})
 
 	port := "8080"
