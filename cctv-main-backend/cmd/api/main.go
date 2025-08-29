@@ -226,10 +226,15 @@ func main() {
 		ingestBase := getEnv("UPLOAD_BASE_URL", "")
 		pushBase := getEnv("PUSH_SERVICE_URL", "")
 		mediaBase := getEnv("MEDIAMTX_URL", "")
+		aiBase := getEnv("AI_WORKER_URL", "")
 
 		ing := extRes{Ok: false, Status: 0}
 		if ingestBase != "" { ing = probe(ingestBase+"/healthz", http.MethodGet) }
 		resp["ingestion"] = ing
+
+		aw := extRes{Ok: false, Status: 0}
+		if aiBase != "" { aw = probe(aiBase+"/healthz", http.MethodGet) }
+		resp["ai_worker"] = aw
 
 		ps := extRes{Ok: false, Status: 0}
 		if pushBase != "" { ps = probe(pushBase+"/send", http.MethodOptions) }
@@ -238,6 +243,9 @@ func main() {
 		ms := extRes{Ok: false, Status: 0}
 		if mediaBase != "" { ms = probe(mediaBase, http.MethodGet) }
 		resp["media_server"] = ms
+
+		// Backend self status (this handler is served by backend)
+		resp["backend"] = extRes{Ok: true, Status: http.StatusOK}
 
 		// RabbitMQ (optional): try TCP dial to host:port of RABBITMQ_URL
 		rmq := map[string]any{"ok": false}

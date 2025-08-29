@@ -64,36 +64,7 @@ export default async function Home() {
   return (
     <div className="space-y-6">
       <PageHeader title="Overview" />
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        <div className="card">
-          <div className="font-medium">Main Backend</div>
-          <div className={main.ok ? 'text-green-600' : 'text-red-600'}>
-            {main.ok ? 'Healthy' : 'Unavailable'} ({main.status})
-          </div>
-        </div>
-        <div className="card">
-          <div className="font-medium">Ingestion Service</div>
-          <div className={ingestion.ok ? 'text-green-600' : 'text-red-600'}>
-            {ingestion.ok ? 'Healthy' : 'Unavailable'} ({ingestion.status})
-          </div>
-        </div>
-        {pushUrl && (
-          <div className="card">
-            <div className="font-medium">Push Service</div>
-            <div className={(pushSvc?.ok ? 'text-green-600' : 'text-yellow-600')}>
-              {(pushSvc?.ok ? 'Reachable' : 'No response')} ({pushSvc?.status || 0})
-            </div>
-          </div>
-        )}
-        {mediaUrl && (
-          <div className="card">
-            <div className="font-medium">Media Server</div>
-            <div className={(mediaSvc?.ok ? 'text-green-600' : 'text-yellow-600')}>
-              {(mediaSvc?.ok ? 'Reachable' : 'No response')} ({mediaSvc?.status || 0})
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Consolidated in Detailed Health Report below */}
 
       <div className="card">
         <div className="font-medium mb-2">Quick Links</div>
@@ -111,6 +82,20 @@ export default async function Home() {
           <div className="font-medium mb-2">Detailed Health Report</div>
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3 text-sm">
             <div className="border rounded p-3">
+              <div className="font-medium mb-1">Backend</div>
+              <div className={(report.backend?.ok ? 'text-green-600':'text-red-600')}>{report.backend?.ok ? 'Healthy' : 'Unavailable'} ({report.backend?.status || 0})</div>
+            </div>
+            <div className="border rounded p-3">
+              <div className="font-medium mb-1">Ingestion Service</div>
+              <div className={(report.ingestion?.ok ? 'text-green-600':'text-yellow-600')}>{report.ingestion?.ok ? 'Reachable' : 'No response'} ({report.ingestion?.status || 0})</div>
+            </div>
+            {'ai_worker' in report && (
+              <div className="border rounded p-3">
+                <div className="font-medium mb-1">AI Worker</div>
+                <div className={(report.ai_worker?.ok ? 'text-green-600':'text-yellow-600')}>{report.ai_worker?.ok ? 'Reachable' : 'No response'} ({report.ai_worker?.status || 0})</div>
+              </div>
+            )}
+            <div className="border rounded p-3">
               <div className="font-medium mb-1">Database</div>
               <div className={(report.database?.ok ? 'text-green-600':'text-red-600')}>{report.database?.ok ? 'OK' : 'Error'}</div>
             </div>
@@ -122,10 +107,6 @@ export default async function Home() {
               {'write_ok' in (report.s3||{}) && (
                 <div className="text-xs text-gray-600">Write test: {String(report.s3?.write_ok)}</div>
               )}
-            </div>
-            <div className="border rounded p-3">
-              <div className="font-medium mb-1">Ingestion Service</div>
-              <div className={(report.ingestion?.ok ? 'text-green-600':'text-yellow-600')}>{report.ingestion?.ok ? 'Reachable' : 'No response'} ({report.ingestion?.status || 0})</div>
             </div>
             <div className="border rounded p-3">
               <div className="font-medium mb-1">Push Service</div>
