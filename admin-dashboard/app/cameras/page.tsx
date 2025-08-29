@@ -10,17 +10,17 @@ export default async function CamerasPage({ searchParams }: { searchParams?: { c
   const me = decodeJwt(token)
   const role = (me?.role as 'superadmin' | 'company_admin' | 'user' | undefined) || 'user'
   const companyId = role === 'superadmin' ? (searchParams?.companyId || '') : ''
-  const [companies, cams] = await Promise.all([
-    api.companies().catch(() => []),
-    api.cameras(companyId || undefined).catch(() => []),
-  ])
+  const companies = role === 'superadmin' ? await api.companies().catch(() => []) : []
+  const cams = await api.cameras(companyId || undefined).catch(() => [])
   return (
     <div className="space-y-4">
       <h1 className="title">Cameras</h1>
       {role === 'superadmin' && (
-        <CompanyFilter companies={companies} selectedCompanyId={companyId || ''} />
+        <>
+          <CompanyFilter companies={companies} selectedCompanyId={companyId || ''} />
+          <NewCamera role={role} companies={companies} selectedCompanyId={companyId || ''} />
+        </>
       )}
-      <NewCamera role={role} companies={companies} selectedCompanyId={companyId || ''} />
       <div className="grid gap-3">
         {cams.length === 0 && <div className="text-sm text-gray-600">No cameras</div>}
         {cams.map((c) => (
@@ -35,9 +35,11 @@ export default async function CamerasPage({ searchParams }: { searchParams?: { c
             <div className="mt-2 text-sm">
               <Link className="text-blue-600" href={`/recordings/${c.id}`}>View recordings</Link>
             </div>
-            <div className="mt-2">
-              <CamerasActions camera={c} />
-            </div>
+            {role === 'superadmin' && (
+              <div className="mt-2">
+                <CamerasActions camera={c} />
+              </div>
+            )}
           </div>
         ))}
       </div>

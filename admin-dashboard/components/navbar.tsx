@@ -20,13 +20,20 @@ export function Navbar() {
 
   useEffect(() => {
     let aborted = false
-    fetch('/api/auth/me').then(async (r) => {
-      if (!r.ok) return
-      const j = await r.json().catch(() => null)
-      if (!aborted) setRole(j?.role as Role)
-    }).catch(() => {})
-    return () => { aborted = true }
-  }, [])
+    const load = () => {
+      fetch('/api/auth/me', { cache: 'no-store' }).then(async (r) => {
+        if (!r.ok) { if (!aborted) setRole(undefined); return }
+        const j = await r.json().catch(() => null)
+        if (!aborted) setRole(j?.role as Role)
+      }).catch(() => { if (!aborted) setRole(undefined) })
+    }
+    load()
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'auth:changed') load()
+    }
+    window.addEventListener('storage', onStorage)
+    return () => { aborted = true; window.removeEventListener('storage', onStorage) }
+  }, [pathname])
 
   const links = useMemo(() => {
     if (!role) return [] as typeof allLinks

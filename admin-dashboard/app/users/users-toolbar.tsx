@@ -32,10 +32,15 @@ export default function UsersToolbar({ companies, selectedCompanyId, role }: { c
   async function createUser(e: React.FormEvent) {
     e.preventDefault()
     setMsg(null)
+    const payload: any = { email, password, role: newUserRole }
+    if (role === 'superadmin') {
+      // Only superadmin may explicitly set company_id
+      payload.company_id = parseInt(effectiveCompanyId, 10)
+    }
     const res = await fetch('/api/proxy/api/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, company_id: parseInt(effectiveCompanyId, 10), role: newUserRole })
+      body: JSON.stringify(payload)
     })
     if (res.ok) { setMsg('Created'); setEmail(''); setPassword('') } else { setMsg(`Failed (${res.status})`) }
   }
@@ -81,6 +86,7 @@ export default function UsersToolbar({ companies, selectedCompanyId, role }: { c
               <option value="superadmin">superadmin</option>
             </select>
           ) : (
+            // company_admin and user may only create basic users
             <input className="input w-full bg-gray-50 text-gray-600" value="user" readOnly />
           )}
         </div>

@@ -119,6 +119,10 @@ func (h *Handler) UpdateUserRole(w http.ResponseWriter, r *http.Request) {
         return
     }
     newRole := reqBody["role"]
+    if newRole == "" {
+        http.Error(w, "role wajib diisi", http.StatusBadRequest)
+        return
+    }
     // superadmin dapat override company_id via body
     if role == "superadmin" {
         if s, ok := reqBody["company_id"]; ok && s != "" {
@@ -128,10 +132,23 @@ func (h *Handler) UpdateUserRole(w http.ResponseWriter, r *http.Request) {
         }
     }
 
-	if err := h.service.UpdateRole(userID, int64(companyID), newRole); err != nil {
-		http.Error(w, "Pengguna tidak ditemukan atau bukan bagian dari perusahaan Anda", http.StatusNotFound)
-		return
-	}
+    // Guard: company_admin tidak boleh demote admin menjadi user
+    if role == "company_admin" && newRole == "user" {
+        currentRole, err := h.service.GetUserRole(userID, int64(companyID))
+        if err != nil {
+            http.Error(w, "Pengguna tidak ditemukan atau bukan bagian dari perusahaan Anda", http.StatusNotFound)
+            return
+        }
+        if currentRole == "company_admin" {
+            http.Error(w, "company_admin tidak boleh menurunkan admin menjadi user", http.StatusForbidden)
+            return
+        }
+    }
+
+    if err := h.service.UpdateRole(userID, int64(companyID), newRole); err != nil {
+        http.Error(w, "Pengguna tidak ditemukan atau bukan bagian dari perusahaan Anda", http.StatusNotFound)
+        return
+    }
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Peran pengguna berhasil diperbarui."))
 }

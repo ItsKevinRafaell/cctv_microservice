@@ -30,10 +30,11 @@ export default async function UsersPage({ searchParams }: { searchParams?: { com
               <div className="font-medium">{u.email}</div>
               <div className="text-xs text-gray-500">ID: {u.id} • Company: {u.company_id}</div>
             </div>
-            <UsersActions user={u} viewerRole={role} selectedCompanyId={effectiveCompanyId} />
+            <UsersActions user={u} viewerRole={role} />
           </div>
         ))}
       </div>
     </div>
   )
 }
+

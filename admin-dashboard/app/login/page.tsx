@@ -18,7 +18,13 @@ export default function LoginPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     })
-    if (res.ok) { router.push('/') } else { const t = await res.text(); setError(t || 'Login failed') }
+    if (res.ok) {
+      try { window.localStorage.setItem('auth:changed', String(Date.now())) } catch {}
+      router.replace('/')
+      router.refresh()
+    } else {
+      const t = await res.text(); setError(t || 'Login failed')
+    }
     setLoading(false)
   }
 

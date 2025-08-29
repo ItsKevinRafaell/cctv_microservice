@@ -12,12 +12,13 @@ import (
 var jwtSecret = []byte("kunci-rahasia-yang-sangat-aman-dan-panjang")
 
 type Service interface {
-	Register(user *domain.User) error
-	Login(input *domain.User) (string, error)
-	FindUsersByCompany(companyID int64) ([]domain.User, error)
-	UpdateRole(userID, companyID int64, role string) error
-	Delete(userID, companyID int64) error
-	SaveFCMToken(userID int64, fcmToken string) error
+    Register(user *domain.User) error
+    Login(input *domain.User) (string, error)
+    FindUsersByCompany(companyID int64) ([]domain.User, error)
+    GetUserRole(userID, companyID int64) (string, error)
+    UpdateRole(userID, companyID int64, role string) error
+    Delete(userID, companyID int64) error
+    SaveFCMToken(userID int64, fcmToken string) error
 }
 
 type service struct {
@@ -66,11 +67,15 @@ func (s *service) Register(user *domain.User) error {
 }
 
 func (s *service) FindUsersByCompany(companyID int64) ([]domain.User, error) {
-	return s.repo.GetUsersByCompanyID(companyID)
+    return s.repo.GetUsersByCompanyID(companyID)
+}
+
+func (s *service) GetUserRole(userID, companyID int64) (string, error) {
+    return s.repo.GetUserRoleByCompany(userID, companyID)
 }
 
 func (s *service) UpdateRole(userID, companyID int64, role string) error {
-	return s.repo.UpdateUserRole(userID, companyID, role)
+    return s.repo.UpdateUserRole(userID, companyID, role)
 }
 
 func (s *service) Delete(userID, companyID int64) error {

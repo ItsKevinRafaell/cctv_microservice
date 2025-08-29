@@ -7,14 +7,15 @@ import (
 )
 
 type Repository interface {
-	CreateUser(user *domain.User) error
-	GetUserByEmail(email string) (*domain.User, error)
-	GetUsersByCompanyID(companyID int64) ([]domain.User, error)
-	UpdateUserRole(userID, companyID int64, role string) error
-	DeleteUser(userID, companyID int64) error
-	UpdateFCMToken(userID int64, fcmToken string) error
-	GetAdminFCMTokensByCompany(ctx context.Context, companyID int64) ([]string, error)
-	DeleteFCMTokenByValue(ctx context.Context, token string) error
+    CreateUser(user *domain.User) error
+    GetUserByEmail(email string) (*domain.User, error)
+    GetUsersByCompanyID(companyID int64) ([]domain.User, error)
+    GetUserRoleByCompany(userID, companyID int64) (string, error)
+    UpdateUserRole(userID, companyID int64, role string) error
+    DeleteUser(userID, companyID int64) error
+    UpdateFCMToken(userID int64, fcmToken string) error
+    GetAdminFCMTokensByCompany(ctx context.Context, companyID int64) ([]string, error)
+    DeleteFCMTokenByValue(ctx context.Context, token string) error
 }
 
 type repository struct {
@@ -60,6 +61,15 @@ func (r *repository) GetUsersByCompanyID(companyID int64) ([]domain.User, error)
 		users = append(users, u)
 	}
 	return users, nil
+}
+
+func (r *repository) GetUserRoleByCompany(userID, companyID int64) (string, error) {
+    var role string
+    err := r.db.QueryRow(`SELECT role FROM users WHERE id = $1 AND company_id = $2`, userID, companyID).Scan(&role)
+    if err != nil {
+        return "", err
+    }
+    return role, nil
 }
 
 func (r *repository) UpdateUserRole(userID, companyID int64, role string) error {
