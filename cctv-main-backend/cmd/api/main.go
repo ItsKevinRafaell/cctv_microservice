@@ -4,9 +4,11 @@ import (
 	"cctv-main-backend/internal/anomaly"
 	"cctv-main-backend/internal/camera"
 	"cctv-main-backend/internal/company"
+	"cctv-main-backend/internal/domain"
 	"cctv-main-backend/internal/handlers"
 	"cctv-main-backend/internal/storage"
 	"cctv-main-backend/internal/user"
+	"cctv-main-backend/pkg/auth"
 	"cctv-main-backend/pkg/database"
 	"cctv-main-backend/pkg/notifier"
 	"context"
@@ -22,6 +24,7 @@ import (
 	"time"
 
     "golang.org/x/crypto/bcrypt"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func main() {
@@ -181,6 +184,71 @@ func main() {
 		default:
 			http.Error(w, "Metode tidak diizinkan", http.StatusMethodNotAllowed)
 		}
+	}))
+
+	// Test notification endpoint: send push for given anomaly_id or latest anomaly in company
+	mux.HandleFunc("/api/notifications/test", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Metode tidak diizinkan", http.StatusMethodNotAllowed)
+			return
+		}
+		if n == nil {
+			http.Error(w, "Notifier tidak tersedia", http.StatusServiceUnavailable)
+			return
+		}
+		claims, ok := r.Context().Value(auth.UserClaimsKey).(jwt.MapClaims)
+		if !ok || claims == nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		var companyID int64
+		role, _ := claims["role"].(string)
+		if strings.EqualFold(role, "superadmin") {
+			companyID = 0
+		} else {
+			cID, ok := claims["company_id"].(float64)
+			if !ok {
+				http.Error(w, "Invalid token claims", http.StatusUnauthorized)
+				return
+			}
+			companyID = int64(cID)
+		}
+		var payload struct{
+			AnomalyID int64 `json:"anomaly_id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&payload)
+		var rep *domain.AnomalyReport
+		if payload.AnomalyID > 0 {
+			if x, err := anomalyService.GetDetail(companyID, payload.AnomalyID); err == nil {
+				rep = x
+			} else {
+				http.Error(w, "Anomali tidak ditemukan", http.StatusNotFound)
+				return
+			}
+		} else {
+			if list, err := anomalyService.ListRecent(companyID, 1); err == nil && len(list) > 0 {
+				rep = &list[0]
+			}
+			if rep == nil {
+				http.Error(w, "Tidak ada anomaly untuk perusahaan ini", http.StatusBadRequest)
+				return
+			}
+		}
+		if rep.AnomalyType == "" {
+			rep.AnomalyType = "anomaly"
+		}
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+		if err := n.NotifyAnomaly(ctx, rep); err != nil {
+			http.Error(w, "Gagal mengirim notifikasi", http.StatusBadGateway)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"ok": true,
+			"anomaly_id": rep.ID,
+			"camera_id": rep.CameraID,
+		})
 	}))
 
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
