@@ -21,7 +21,7 @@ Companies
 - DELETE `/api/companies/{id}`
 
 Cameras (JWT required)
-- POST `/api/cameras` — `{ name, location? }`
+- POST `/api/cameras` — `{ name, location? }` 
 - GET `/api/cameras`
 - PUT `/api/cameras/{id}` — `{ name?, location? }`
 - DELETE `/api/cameras/{id}`
