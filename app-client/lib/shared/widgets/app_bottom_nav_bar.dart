@@ -9,7 +9,15 @@ class AppBottomNavBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentIndex = ref.watch(currentNavIndexProvider);
+    // Derive selected index from current route, do not modify providers during build
+    final path = GoRouterState.of(context).uri.path;
+    final currentIndex = path.startsWith('/history')
+        ? 1
+        : path.startsWith('/account')
+            ? 2
+            : path.startsWith('/settings')
+                ? 3
+                : 0;
 
     return NavigationBar(
       backgroundColor: const Color(0xFF024670),
@@ -22,8 +30,6 @@ class AppBottomNavBar extends ConsumerWidget {
       selectedIndex: currentIndex,
       onDestinationSelected: (index) {
         if (currentIndex == index) return;
-        ref.read(currentNavIndexProvider.notifier).state = index;
-
         switch (index) {
           case 0:
             context.go('/');
@@ -39,7 +45,7 @@ class AppBottomNavBar extends ConsumerWidget {
             break;
         }
       },
-      // Menambahkan destinasi baru
+      // Menambahkan destinasi
       destinations: const [
         NavigationDestination(
           icon: Icon(Icons.home_outlined, color: Colors.white70),

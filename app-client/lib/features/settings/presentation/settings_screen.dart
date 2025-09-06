@@ -153,7 +153,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             ),
             onTap: () {
               ref.read(authStateProvider.notifier).signOut();
-              context.go('/sign-in'); // Arahkan ke halaman login
+              context.go('/sign-in'); // Kembali ke halaman login
             },
           )
         ],

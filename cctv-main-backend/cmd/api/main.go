@@ -21,8 +21,7 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/crypto/bcrypt"
-	"golang.org/x/sys/unix"
+    "golang.org/x/crypto/bcrypt"
 )
 
 func main() {
@@ -304,13 +303,9 @@ func main() {
 			"mem_alloc":  msnap.Alloc,
 			"mem_sys":    msnap.Sys,
 		}
-		var sfs unix.Statfs_t
-		if err := unix.Statfs("/", &sfs); err == nil {
-			resp["disk"] = map[string]any{
-				"total": sfs.Blocks * uint64(sfs.Bsize),
-				"free":  sfs.Bavail * uint64(sfs.Bsize),
-			}
-		}
+        if d, ok := getDiskStats(); ok {
+            resp["disk"] = d
+        }
 
 		// Build info from env
 		resp["build"] = map[string]string{
@@ -353,11 +348,11 @@ func getEnv(key, def string) string {
 
 // ensureSuperadmin creates or elevates a superadmin account if env vars are set
 func ensureSuperadmin(db *sql.DB) {
-	email := os.Getenv("SUPERADMIN_EMAIL")
-	password := os.Getenv("SUPERADMIN_PASSWORD")
-	if email == "" || password == "" {
-		return
-	}
+    email := os.Getenv("SUPERADMIN_EMAIL")
+    password := os.Getenv("SUPERADMIN_PASSWORD")
+    if email == "" || password == "" {
+        return
+    }
 
 	// Check if user exists
 	var exists bool
@@ -366,15 +361,20 @@ func ensureSuperadmin(db *sql.DB) {
 		log.Println("seed superadmin check error:", err)
 		return
 	}
-	if exists {
-		// Elevate role to superadmin
-		if _, err := db.Exec("UPDATE users SET role='superadmin' WHERE email=$1", email); err != nil {
-			log.Println("seed superadmin elevate error:", err)
-		} else {
-			log.Println("Superadmin elevated:", email)
-		}
-		return
-	}
+    if exists {
+        // Elevate role to superadmin and optionally reset password if env provided
+        hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+        if err != nil {
+            log.Println("bcrypt error:", err)
+            return
+        }
+        if _, err := db.Exec("UPDATE users SET role='superadmin', password_hash=$2 WHERE email=$1", email, string(hash)); err != nil {
+            log.Println("seed superadmin elevate/update error:", err)
+        } else {
+            log.Println("Superadmin elevated & password updated:", email)
+        }
+        return
+    }
 
 	// Create a system company if not exists
 	var companyID int64

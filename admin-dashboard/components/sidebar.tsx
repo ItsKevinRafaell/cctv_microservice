@@ -36,9 +36,7 @@ export function Sidebar({ className = 'hidden md:flex md:w-64 shrink-0 border-r 
     return () => { aborted = true; window.removeEventListener('storage', onStorage) }
   }, [pathname])
 
-  // Hide on login
-  if (pathname.startsWith('/login')) return null
-
+  // Compute links first to keep hook order consistent across renders
   const links = useMemo(() => {
     if (!role) return [] as typeof allLinks
     return allLinks.filter((l) => {
@@ -47,6 +45,9 @@ export function Sidebar({ className = 'hidden md:flex md:w-64 shrink-0 border-r 
       return match.roles.includes(role)
     })
   }, [role])
+
+  // Hide on login
+  if (pathname.startsWith('/login')) return null
 
   return (
     <aside className={className}>

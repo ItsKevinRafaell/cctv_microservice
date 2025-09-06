@@ -65,7 +65,11 @@ class FcmController extends StateNotifier<FcmState> {
         await _store.save(newToken);
         state = state.copyWith(token: newToken);
         // Update token on backend if user is logged in
-        await _authRepo.upsertFcmToken(newToken);
+        try {
+          await _authRepo.upsertFcmToken(newToken);
+        } catch (_) {
+          // ignore when not authenticated yet
+        }
       });
     } else {
       // Clear token if permissions are revoked
@@ -94,12 +98,20 @@ class FcmController extends StateNotifier<FcmState> {
     final currentToken = state.token;
     if (currentToken != null) {
       // Panggil API untuk mengirim token ke backend
-      await _authRepo.upsertFcmToken(currentToken);
+      try {
+        await _authRepo.upsertFcmToken(currentToken);
+      } catch (_) {
+        // ignore errors (e.g., 401) if authentication not ready
+      }
     }
   }
 
   /// Dipanggil sebelum user logout
   Future<void> unregisterFromBackend() async {
-    await _authRepo.deleteFcmToken();
+    try {
+      await _authRepo.deleteFcmToken();
+    } catch (_) {
+      // ignore errors if already unauthenticated
+    }
   }
 }

@@ -28,17 +28,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
-    try {
-      await Future.delayed(const Duration(milliseconds: 200));
-      final ctrl = ref.read(authStateProvider.notifier);
-      await ctrl.signIn(_email.text.trim(), _password.text);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sign in failed: ${e is Exception ? e.toString() : 'Unknown error'}')),
-      );
-      setState(() => _loading = false);
-    }
+    await Future.delayed(const Duration(milliseconds: 600));
+    final ctrl = ref.read(authStateProvider.notifier);
+    await ctrl.signIn(_email.text, _password.text);
   }
 
   @override

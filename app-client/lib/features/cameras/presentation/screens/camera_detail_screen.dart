@@ -2,6 +2,7 @@ import 'package:anomeye/features/cameras/presentation/cameras_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // Note: Adjust this import path as needed.
+import 'package:go_router/go_router.dart';
 
 class CameraDetailScreen extends ConsumerStatefulWidget {
   final String cameraId;
@@ -54,6 +55,34 @@ class _CameraDetailScreenState extends ConsumerState<CameraDetailScreen> {
                         child: const Icon(Icons.play_circle_outline,
                             size: 64, color: Colors.white),
                       ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.live_tv),
+                            label: const Text('Watch Live'),
+                            onPressed: () {
+                              // id di app = stream_key
+                              // gunakan go_router
+                              // ignore: use_build_context_synchronously
+                              context.push('/live/${camera.id}');
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.video_library_outlined),
+                            label: const Text('Recordings'),
+                            onPressed: () {
+                              // ignore: use_build_context_synchronously
+                              context.push('/cameras/${camera.id}/recordings');
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     Text(camera.location ?? 'No location',

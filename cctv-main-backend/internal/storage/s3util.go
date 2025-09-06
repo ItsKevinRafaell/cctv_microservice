@@ -2,14 +2,15 @@
 package storage
 
 import (
-	"context"
-	"fmt"
-	"time"
+    "bytes"
+    "context"
+    "fmt"
+    "time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	awsconfig "github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
+    "github.com/aws/aws-sdk-go-v2/aws"
+    awsconfig "github.com/aws/aws-sdk-go-v2/config"
+    "github.com/aws/aws-sdk-go-v2/credentials"
+    "github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 // S3Util menyederhanakan akses ke MinIO/S3 untuk presign URL dan public URL.
@@ -114,13 +115,47 @@ func (u *S3Util) PublicURL(bucket, key string) string {
 // EnsureBucket memastikan bucket tersedia (coba HeadBucket, jika gagal => CreateBucket).
 // Aman dipanggil saat startup.
 func (u *S3Util) EnsureBucket(ctx context.Context, bucket string) error {
-	if u.clientInternal == nil {
-		return fmt.Errorf("clientInternal is nil")
-	}
-	_, err := u.clientInternal.HeadBucket(ctx, &s3.HeadBucketInput{Bucket: &bucket})
-	if err == nil {
-		return nil
-	}
-	_, err = u.clientInternal.CreateBucket(ctx, &s3.CreateBucketInput{Bucket: &bucket})
-	return err
+    if u.clientInternal == nil {
+        return fmt.Errorf("clientInternal is nil")
+    }
+    _, err := u.clientInternal.HeadBucket(ctx, &s3.HeadBucketInput{Bucket: &bucket})
+    if err == nil {
+        return nil
+    }
+    _, err = u.clientInternal.CreateBucket(ctx, &s3.CreateBucketInput{Bucket: &bucket})
+    return err
+}
+
+// HeadBucketOnly performs only a head bucket call for health check.
+func (u *S3Util) HeadBucketOnly(ctx context.Context, bucket string) error {
+    if u.clientInternal == nil {
+        return fmt.Errorf("clientInternal is nil")
+    }
+    _, err := u.clientInternal.HeadBucket(ctx, &s3.HeadBucketInput{Bucket: &bucket})
+    return err
+}
+
+// PutObject uploads small bytes into bucket/key.
+func (u *S3Util) PutObject(ctx context.Context, bucket, key string, data []byte) error {
+    if u.clientInternal == nil {
+        return fmt.Errorf("clientInternal is nil")
+    }
+    _, err := u.clientInternal.PutObject(ctx, &s3.PutObjectInput{
+        Bucket: &bucket,
+        Key:    &key,
+        Body:   bytes.NewReader(data),
+    })
+    return err
+}
+
+// DeleteObject removes object bucket/key.
+func (u *S3Util) DeleteObject(ctx context.Context, bucket, key string) error {
+    if u.clientInternal == nil {
+        return fmt.Errorf("clientInternal is nil")
+    }
+    _, err := u.clientInternal.DeleteObject(ctx, &s3.DeleteObjectInput{
+        Bucket: &bucket,
+        Key:    &key,
+    })
+    return err
 }
