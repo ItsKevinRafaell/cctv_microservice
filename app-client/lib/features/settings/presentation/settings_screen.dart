@@ -117,6 +117,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             onChanged: _handleNotificationPermission,
             secondary: const Icon(Icons.notifications_active_outlined),
           ),
+          ListTile(
+            leading: const Icon(Icons.notifications_active),
+            title: const Text('Send Test Notification (latest anomaly)'),
+            subtitle: const Text('Tap then click the system notification'),
+            onTap: () async {
+              final dio = ref.read(dioProvider);
+              try {
+                final res = await dio.post('/api/notifications/test');
+                if (!mounted) return;
+                final id = res.data['anomaly_id'] ?? '-';
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Test push sent for anomaly $id')),
+                );
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed to send test push: $e')),
+                );
+              }
+            },
+          ),
           if (fcmState.token != null) ListTile(
             leading: const Icon(Icons.vpn_key_outlined),
             title: const Text('FCM Token'),
