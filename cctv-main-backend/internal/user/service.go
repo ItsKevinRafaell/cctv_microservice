@@ -12,12 +12,13 @@ import (
 var jwtSecret = []byte("kunci-rahasia-yang-sangat-aman-dan-panjang")
 
 type Service interface {
-	Register(user *domain.User) error
-	Login(input *domain.User) (string, error)
-	FindUsersByCompany(companyID int64) ([]domain.User, error)
-	UpdateRole(userID, companyID int64, role string) error
-	Delete(userID, companyID int64) error
-	SaveFCMToken(userID int64, fcmToken string) error
+    Register(user *domain.User) error
+    Login(input *domain.User) (string, error)
+    FindUsersByCompany(companyID int64) ([]domain.User, error)
+    FindAllUsers() ([]domain.User, error)
+    UpdateRole(userID, companyID int64, role string) error
+    Delete(userID, companyID int64) error
+    SaveFCMToken(userID int64, fcmToken string) error
 }
 
 type service struct {
@@ -66,7 +67,11 @@ func (s *service) Register(user *domain.User) error {
 }
 
 func (s *service) FindUsersByCompany(companyID int64) ([]domain.User, error) {
-	return s.repo.GetUsersByCompanyID(companyID)
+    return s.repo.GetUsersByCompanyID(companyID)
+}
+
+func (s *service) FindAllUsers() ([]domain.User, error) {
+    return s.repo.GetAllUsers()
 }
 
 func (s *service) UpdateRole(userID, companyID int64, role string) error {

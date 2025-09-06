@@ -7,6 +7,7 @@ import 'package:anomeye/features/auth/presentation/screens/sign_in_screen.dart';
 import 'package:anomeye/features/auth/presentation/screens/sign_up_screen.dart';
 import 'package:anomeye/features/cameras/presentation/screens/camera_detail_screen.dart';
 import 'package:anomeye/features/cameras/presentation/screens/home_dashboard_screen.dart';
+import 'package:anomeye/features/cameras/presentation/screens/cameras_list_screen.dart';
 import 'package:anomeye/features/settings/presentation/settings_screen.dart';
 import 'package:anomeye/features/streaming/presentation/live_player_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,6 +48,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           name: 'home',
           pageBuilder: (_, s) =>
               const NoTransitionPage(child: HomeDashboard())),
+      GoRoute(
+          path: '/cameras',
+          name: 'cameras',
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: CamerasListScreen())),
       GoRoute(
         path: '/camera/:id',
         name: 'camera-detail',
@@ -99,8 +105,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
     redirect: (context, state) {
-      final loggingIn =
-          state.fullPath == '/sign-in' || state.fullPath == '/sign-up';
+      final path = state.uri.path;
+      final loggingIn = path == '/sign-in' || path == '/sign-up';
 
       final authed = auth.maybeWhen(
         authenticated: (_, __) => true,

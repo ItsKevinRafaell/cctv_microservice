@@ -2,6 +2,7 @@ import 'package:anomeye/features/auth/domain/auth_repo.dart';
 import 'package:anomeye/features/auth/domain/auth_state.dart';
 import 'package:anomeye/features/notifications/presentation/fcm_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:anomeye/app/di.dart';
 
 class AuthController extends StateNotifier<AuthState> {
   // FIX 1: Hapus deklarasi duplikat. Cukup deklarasikan di constructor.
@@ -17,8 +18,10 @@ class AuthController extends StateNotifier<AuthState> {
     state.when(
       unauthenticated: () {
         // Tidak perlu melakukan apa-apa jika belum login
+        _ref.read(authTokenProvider.notifier).state = null;
       },
       authenticated: (token, user) {
+        _ref.read(authTokenProvider.notifier).state = token;
         // Jika sudah login, langsung daftarkan FCM token
         _ref.read(fcmControllerProvider.notifier).registerIfPossible();
       },
@@ -28,12 +31,28 @@ class AuthController extends StateNotifier<AuthState> {
   Future<void> signUp(String email, String password, String company) async {
     state = await _repo.signUp(
         email: email, password: password, companyId: company);
+    state.when(
+      unauthenticated: () {
+        _ref.read(authTokenProvider.notifier).state = null;
+      },
+      authenticated: (token, user) {
+        _ref.read(authTokenProvider.notifier).state = token;
+      },
+    );
     // Daftarkan FCM token setelah berhasil sign up
     _ref.read(fcmControllerProvider.notifier).registerIfPossible();
   }
 
   Future<void> signIn(String email, String password) async {
     state = await _repo.signIn(email: email, password: password);
+    state.when(
+      unauthenticated: () {
+        _ref.read(authTokenProvider.notifier).state = null;
+      },
+      authenticated: (token, user) {
+        _ref.read(authTokenProvider.notifier).state = token;
+      },
+    );
     // Daftarkan FCM token setelah berhasil login
     _ref.read(fcmControllerProvider.notifier).registerIfPossible();
   }
@@ -44,6 +63,7 @@ class AuthController extends StateNotifier<AuthState> {
     // Hapus data lokal
     await _repo.signOut();
     state = const AuthState.unauthenticated();
+    _ref.read(authTokenProvider.notifier).state = null;
     // Bersihkan state FCM controller
     await _ref.read(fcmControllerProvider.notifier).clear();
   }

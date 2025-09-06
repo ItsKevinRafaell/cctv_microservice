@@ -28,7 +28,15 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     final player = ref.read(playerProvider);
     final url = ref.read(streamUrlProvider(widget.cameraId));
     // HLS live
-    await player.open(Media(url), play: true);
+    try {
+      await player.open(Media(url), play: true);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to start live: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -45,8 +53,18 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
             icon: const Icon(Icons.replay),
             tooltip: 'Reopen',
             onPressed: () async {
-              await player.stop();
-              await player.open(Media(url), play: true);
+              try {
+                await player.stop();
+              } catch (_) {}
+              try {
+                await player.open(Media(url), play: true);
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to reopen: $e')),
+                  );
+                }
+              }
             },
           ),
         ],

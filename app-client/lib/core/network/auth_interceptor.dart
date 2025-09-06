@@ -8,13 +8,10 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    final state = ref.read(authStateProvider);
-    state.maybeWhen(
-      authenticated: (token, _) {
-        options.headers['Authorization'] = 'Bearer $token';
-      },
-      orElse: () {},
-    );
+    final token = ref.read(authTokenProvider);
+    if (token != null && token.isNotEmpty) {
+      options.headers['Authorization'] = 'Bearer $token';
+    }
     handler.next(options);
   }
 }

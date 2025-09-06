@@ -65,7 +65,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
                 // --- Bagian Live Cameras ---
                 SectionHeader(
                   title: 'Live Cameras',
-                  onSeeAll: () {/* Navigasi ke halaman semua kamera */},
+                  onSeeAll: () { context.push('/cameras'); },
                 ),
                 GridView.builder(
                   itemCount: cameraCount,

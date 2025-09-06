@@ -223,9 +223,9 @@ services:
       MINIO_SECRET_KEY: minio-secret-key
     command: >
       /bin/bash -lc "
-        /opt/bitnami/minio-client/bin/mc alias set ${MINIO_ALIAS} ${MINIO_URL} ${MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY} &&
-        /opt/bitnami/minio-client/bin/mc mb -p ${MINIO_ALIAS}/video-archive || true &&
-        /opt/bitnami/minio-client/bin/mc mirror --overwrite --remove --watch /recordings ${MINIO_ALIAS}/video-archive
+        /opt/bitnami/minio-client/bin/mc alias set $${MINIO_ALIAS} $${MINIO_URL} $${MINIO_ACCESS_KEY} $${MINIO_SECRET_KEY} &&
+        /opt/bitnami/minio-client/bin/mc mb -p $${MINIO_ALIAS}/video-archive || true &&
+        /opt/bitnami/minio-client/bin/mc mirror --overwrite --remove --watch /recordings $${MINIO_ALIAS}/video-archive
       "
     depends_on:
       - minio

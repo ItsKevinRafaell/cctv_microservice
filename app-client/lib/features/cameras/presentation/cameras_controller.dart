@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:anomeye/features/cameras/domain/cameras_repo.dart';
+import 'package:anomeye/app/di.dart';
+import 'package:anomeye/features/cameras/data/cameras_repo_api.dart';
 import 'package:anomeye/features/cameras/domain/camera.dart';
 
 // FILE INI SUDAH BENAR, JANGAN DIUBAH
@@ -58,5 +60,7 @@ class CameraDetailController extends StateNotifier<AsyncValue<Camera>> {
 
 /// Provider repo untuk di-inject dari DI (lihat bagian DI)
 final camerasRepoProvider = Provider<CamerasRepo>((ref) {
-  throw UnimplementedError('camerasRepoProvider belum di-bind di DI');
+  // Default ke API; bisa dioverride di test/dev jika perlu.
+  final dio = ref.watch(dioProvider);
+  return CamerasRepoApi(dio);
 });

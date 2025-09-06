@@ -18,26 +18,62 @@ class AnomaliesRepoApi implements AnomaliesRepo {
         },
       );
     } on DioException catch (_) {
-      // Fallback to /api/anomalies if /recent is unavailable
-      res = await _dio.get(
-        '/api/anomalies',
-        queryParameters: {
-          if (cameraId != null) 'camera_id': cameraId,
-          'limit': limit,
-        },
-      );
+      try {
+        // Fallback to /api/anomalies if /recent is unavailable
+        res = await _dio.get(
+          '/api/anomalies',
+          queryParameters: {
+            if (cameraId != null) 'camera_id': cameraId,
+            'limit': limit,
+          },
+        );
+      } on DioException catch (_) {
+        return [];
+      }
     }
 
     final body = res.data;
-    final List<dynamic> list;
+    List<dynamic> list = const [];
     if (body is List) {
       list = body;
-    } else if (body is Map && body['items'] is List) {
-      list = body['items'] as List;
+    } else if (body is Map) {
+      if (body['items'] is List) {
+        list = body['items'] as List;
+      } else if (body['data'] is List) {
+        list = body['data'] as List;
+      } else if (body['reports'] is List) {
+        list = body['reports'] as List;
+      } else if (body.containsKey('id')) {
+        // Single anomaly object
+        list = [body];
+      } else if (body['error'] != null) {
+        list = const [];
+      } else {
+        // Try fallback endpoint
+        final alt = await _dio.get(
+          '/api/anomalies',
+          queryParameters: {
+            if (cameraId != null) 'camera_id': cameraId,
+            'limit': limit,
+          },
+        );
+        final aBody = alt.data;
+        if (aBody is List) {
+          list = aBody;
+        } else if (aBody is Map && aBody['items'] is List) {
+          list = aBody['items'] as List;
+        } else {
+          throw Exception('Unexpected response for anomalies');
+        }
+      }
     } else {
-      throw Exception('Unexpected response for anomalies');
+      return [];
     }
-    final items = list.map((e) => _mapAnomaly((e as Map).cast<String, dynamic>())).toList();
+    var items = list.map((e) => _mapAnomaly((e as Map).cast<String, dynamic>())).toList();
+    // Client-side filter jika cameraId diberikan (backend mungkin tidak mendukung param ini)
+    if (cameraId != null && cameraId.isNotEmpty) {
+      items = items.where((a) => a.cameraId == cameraId).toList();
+    }
     // Sort newest first if not already
     items.sort((a, b) => b.reportedAt.compareTo(a.reportedAt));
     return items;

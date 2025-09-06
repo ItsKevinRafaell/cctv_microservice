@@ -29,7 +29,7 @@ export default function UsersActions({ user, viewerRole, selectedCompanyId }: { 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
-      if (res.ok) { setRole(next); notify('User updated'); router.refresh() } else { notify(`Update failed (${res.status})`, 'error') }
+      if (res.ok) { setRole(next); notify('User updated'); router.refresh() } else { const t = await res.text().catch(()=> ''); notify(`Update failed (${res.status})${t?': '+t:''}`, 'error') }
     })
   }
 
@@ -37,7 +37,7 @@ export default function UsersActions({ user, viewerRole, selectedCompanyId }: { 
     startTransition(async () => {
       const qs = (viewerRole === 'superadmin' && selectedCompanyId) ? `?company_id=${encodeURIComponent(selectedCompanyId)}` : ''
       const r = await fetch(`/api/proxy/api/users/${user.id}${qs}`, { method: 'DELETE' })
-      if (r.ok) { notify('User deleted'); router.refresh() } else { notify(`Delete failed (${r.status})`, 'error') }
+      if (r.ok) { notify('User deleted'); router.refresh() } else { const t = await r.text().catch(()=> ''); notify(`Delete failed (${r.status})${t?': '+t:''}`, 'error') }
     })
   }
 
@@ -85,7 +85,7 @@ export default function UsersActions({ user, viewerRole, selectedCompanyId }: { 
       if (password) body.password = password
       if (viewerRole === 'superadmin' && selectedCompanyId) body.company_id = selectedCompanyId
       const res = await fetch(`/api/proxy/api/users/${user.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-      if (res.ok) { setPassword(''); setOpen(false); notify('User updated'); router.refresh() } else { notify(`Update failed (${res.status})`, 'error') }
+      if (res.ok) { setPassword(''); setOpen(false); notify('User updated'); router.refresh() } else { const t = await res.text().catch(()=> ''); notify(`Update failed (${res.status})${t?': '+t:''}`, 'error') }
     })
   }
 

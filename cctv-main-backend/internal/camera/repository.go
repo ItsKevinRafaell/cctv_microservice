@@ -11,12 +11,15 @@ import (
 )
 
 type Repository interface {
-	CreateCamera(camera *domain.Camera) (int64, error)
-	GetCamerasByCompanyID(companyID int64) ([]domain.Camera, error)
-	UpdateCamera(camera *domain.Camera) error
-	DeleteCamera(cameraID int64, companyID int64) error
-	// NEW: ambil company_id berdasarkan camera_id (untuk FCM)
-	GetCompanyIDByCameraID(ctx context.Context, cameraID int64) (int64, error)
+    CreateCamera(camera *domain.Camera) (int64, error)
+    GetCamerasByCompanyID(companyID int64) ([]domain.Camera, error)
+    UpdateCamera(camera *domain.Camera) error
+    DeleteCamera(cameraID int64, companyID int64) error
+    // NEW: ambil company_id berdasarkan camera_id (untuk FCM)
+    GetCompanyIDByCameraID(ctx context.Context, cameraID int64) (int64, error)
+    // Admin variants: no company filter
+    UpdateCameraAdmin(camera *domain.Camera) error
+    DeleteCameraAdmin(cameraID int64) error
 }
 
 type repository struct {
@@ -67,7 +70,7 @@ func (r *repository) GetCamerasByCompanyID(companyID int64) ([]domain.Camera, er
 }
 
 func (r *repository) UpdateCamera(camera *domain.Camera) error {
-	query := `UPDATE cameras SET name = $1, location = $2, stream_key = COALESCE(NULLIF($3,''), stream_key), rtsp_source = $4 WHERE id = $5 AND company_id = $6`
+    query := `UPDATE cameras SET name = $1, location = $2, stream_key = COALESCE(NULLIF($3,''), stream_key), rtsp_source = $4 WHERE id = $5 AND company_id = $6`
 
 	result, err := r.db.Exec(query, camera.Name, camera.Location, camera.StreamKey, camera.RTSPSource, camera.ID, camera.CompanyID)
 	if err != nil {
@@ -92,7 +95,7 @@ func (r *repository) UpdateCamera(camera *domain.Camera) error {
 var ErrStreamKeyConflict = errors.New("stream_key already exists")
 
 func (r *repository) DeleteCamera(cameraID int64, companyID int64) error {
-	query := `DELETE FROM cameras WHERE id = $1 AND company_id = $2`
+    query := `DELETE FROM cameras WHERE id = $1 AND company_id = $2`
 
 	result, err := r.db.Exec(query, cameraID, companyID)
 	if err != nil {
@@ -123,4 +126,41 @@ func (r *repository) GetCompanyIDByCameraID(ctx context.Context, cameraID int64)
 		return 0, err
 	}
 	return companyID, nil
+}
+
+// Admin variants
+func (r *repository) UpdateCameraAdmin(camera *domain.Camera) error {
+    query := `UPDATE cameras SET name = $1, location = $2, stream_key = COALESCE(NULLIF($3,''), stream_key), rtsp_source = $4 WHERE id = $5`
+
+    result, err := r.db.Exec(query, camera.Name, camera.Location, camera.StreamKey, camera.RTSPSource, camera.ID)
+    if err != nil {
+        if pe, ok := err.(*pqx.Error); ok && string(pe.Code) == "23505" {
+            return ErrStreamKeyConflict
+        }
+        return err
+    }
+
+    rowsAffected, err := result.RowsAffected()
+    if err != nil {
+        return err
+    }
+    if rowsAffected == 0 {
+        return errors.New("kamera tidak ditemukan")
+    }
+    return nil
+}
+
+func (r *repository) DeleteCameraAdmin(cameraID int64) error {
+    result, err := r.db.Exec(`DELETE FROM cameras WHERE id = $1`, cameraID)
+    if err != nil {
+        return err
+    }
+    rowsAffected, err := result.RowsAffected()
+    if err != nil {
+        return err
+    }
+    if rowsAffected == 0 {
+        return errors.New("kamera tidak ditemukan")
+    }
+    return nil
 }

@@ -50,7 +50,12 @@ export default function UsersToolbar({ companies, selectedCompanyId, role }: { c
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
-    if (res.ok) { setEmail(''); setPassword(''); notify('User created'); router.refresh() } else { notify(`Create failed (${res.status})`, 'error') }
+    if (res.ok) {
+      setEmail(''); setPassword(''); notify('User created'); router.refresh()
+    } else {
+      const msg = await res.text().catch(()=> '')
+      notify(`Create failed (${res.status})${msg ? ': '+msg : ''}`, 'error')
+    }
   }
 
   return (

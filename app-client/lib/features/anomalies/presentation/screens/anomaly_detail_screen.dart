@@ -3,14 +3,43 @@ import 'package:anomeye/features/anomalies/presentation/widgets/anomaly_card.dar
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 
-class AnomalyDetailScreen extends ConsumerWidget {
+class AnomalyDetailScreen extends ConsumerStatefulWidget {
   final String anomalyId;
   const AnomalyDetailScreen({super.key, required this.anomalyId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final anomalyState = ref.watch(anomalyDetailProvider(anomalyId));
+  ConsumerState<AnomalyDetailScreen> createState() => _AnomalyDetailScreenState();
+}
+
+class _AnomalyDetailScreenState extends ConsumerState<AnomalyDetailScreen> {
+  Player? _player;
+
+  @override
+  void dispose() {
+    _player?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _ensureOpen(String? url) async {
+    if (url == null || url.isEmpty) return;
+    _player ??= Player();
+    try {
+      await _player!.open(Media(url), play: true);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to play clip: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final anomalyState = ref.watch(anomalyDetailProvider(widget.anomalyId));
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -18,20 +47,20 @@ class AnomalyDetailScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
         data: (anomaly) {
-          // Tonton juga anomali lain dari kamera yang sama
-          final relatedAnomaliesState =
-              ref.watch(anomaliesListProvider(anomaly.cameraId));
+          // Buka clip jika ada
+          _ensureOpen(anomaly.videoClipUrl);
+          final relatedAnomaliesState = ref.watch(anomaliesListProvider(anomaly.cameraId));
+          final controller = _player != null ? VideoController(_player!) : null;
 
           return CustomScrollView(
             slivers: [
               SliverAppBar(
                 leading: IconButton(
-                  icon: const Icon(Icons.arrow_back), // Or any other icon
-                  onPressed: () {
-                    Navigator.pop(
-                        context); // Navigates back to the previous route
-                  },
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.pop(context),
                 ),
+                title: const Text('Anomaly Detail'),
+                pinned: true,
               ),
               SliverToBoxAdapter(
                 child: Padding(
@@ -39,30 +68,30 @@ class AnomalyDetailScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 1. Placeholder untuk Video Player
                       AspectRatio(
                         aspectRatio: 16 / 9,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Center(
-                            child: Icon(Icons.play_circle_fill_rounded,
-                                color: Colors.white70, size: 64),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: DecoratedBox(
+                            decoration: const BoxDecoration(color: Colors.black),
+                            child: controller != null
+                                ? Video(controller: controller)
+                                : const Center(
+                                    child: Icon(
+                                      Icons.play_circle_fill_rounded,
+                                      color: Colors.white70,
+                                      size: 64,
+                                    ),
+                                  ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 24),
-
-                      // 2. Detail Utama Anomali
-                      Text(anomaly.anomalyType,
-                          style: textTheme.headlineMedium),
+                      Text(anomaly.anomalyType, style: textTheme.headlineMedium),
                       const SizedBox(height: 8),
                       Text(
                         'Detected on ${DateFormat.yMMMMEEEEd().add_jms().format(anomaly.reportedAt)}',
-                        style: textTheme.titleSmall
-                            ?.copyWith(color: Colors.grey[600]),
+                        style: textTheme.titleSmall?.copyWith(color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 16),
                       Row(
@@ -70,15 +99,12 @@ class AnomalyDetailScreen extends ConsumerWidget {
                           Chip(label: Text('Camera: ${anomaly.cameraId}')),
                           const SizedBox(width: 8),
                           Chip(
-                            label: Text(
-                                'Confidence: ${(anomaly.confidence * 100).toStringAsFixed(0)}%'),
+                            label: Text('Confidence: ${(anomaly.confidence * 100).toStringAsFixed(0)}%'),
                             backgroundColor: Colors.blue.shade100,
                           ),
                         ],
                       ),
                       const Divider(height: 48),
-
-                      // 3. Tombol Aksi
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
@@ -88,43 +114,32 @@ class AnomalyDetailScreen extends ConsumerWidget {
                             onPressed: () {},
                           ),
                           TextButton.icon(
-                            icon:
-                                const Icon(Icons.download_for_offline_outlined),
+                            icon: const Icon(Icons.download_for_offline_outlined),
                             label: const Text('Download'),
                             onPressed: () {},
                           ),
                         ],
                       ),
                       const Divider(height: 48),
-
-                      // 4. Anomali Terkait dari Kamera yang Sama
-                      Text('More from ${anomaly.cameraId}',
-                          style: textTheme.headlineSmall),
+                      Text('More from ${anomaly.cameraId}', style: textTheme.headlineSmall),
                       const SizedBox(height: 16),
                       relatedAnomaliesState.when(
-                        loading: () =>
-                            const Center(child: CircularProgressIndicator()),
-                        error: (e, _) =>
-                            Text('Could not load related events: $e'),
+                        loading: () => const Center(child: CircularProgressIndicator()),
+                        error: (e, _) => Text('Could not load related events: $e'),
                         data: (related) {
-                          final otherAnomalies =
-                              related.where((a) => a.id != anomaly.id).toList();
+                          final otherAnomalies = related.where((a) => a.id != anomaly.id).toList();
                           if (otherAnomalies.isEmpty) {
-                            return const Text(
-                                'No other events from this camera.');
+                            return const Text('No other events from this camera.');
                           }
                           return Column(
-                            children: otherAnomalies
-                                .take(3)
-                                .map((item) => AnomalyCard(item: item))
-                                .toList(),
+                            children: otherAnomalies.take(3).map((item) => AnomalyCard(item: item)).toList(),
                           );
                         },
                       ),
                     ],
                   ),
                 ),
-              )
+              ),
             ],
           );
         },

@@ -3,10 +3,13 @@ package camera
 import "cctv-main-backend/internal/domain"
 
 type Service interface {
-	RegisterCamera(camera *domain.Camera) (int64, error)
-	GetCamerasForCompany(companyID int64) ([]domain.Camera, error)
-	UpdateCamera(camera *domain.Camera) error
-	DeleteCamera(cameraID int64, companyID int64) error
+    RegisterCamera(camera *domain.Camera) (int64, error)
+    GetCamerasForCompany(companyID int64) ([]domain.Camera, error)
+    UpdateCamera(camera *domain.Camera) error
+    DeleteCamera(cameraID int64, companyID int64) error
+    // Admin variants: bypass company ownership checks
+    UpdateCameraAdmin(camera *domain.Camera) error
+    DeleteCameraAdmin(cameraID int64) error
 }
 
 type service struct {
@@ -26,9 +29,17 @@ func (s *service) GetCamerasForCompany(companyID int64) ([]domain.Camera, error)
 }
 
 func (s *service) UpdateCamera(camera *domain.Camera) error {
-	return s.repo.UpdateCamera(camera)
+    return s.repo.UpdateCamera(camera)
 }
 
 func (s *service) DeleteCamera(cameraID int64, companyID int64) error {
-	return s.repo.DeleteCamera(cameraID, companyID)
+    return s.repo.DeleteCamera(cameraID, companyID)
+}
+
+func (s *service) UpdateCameraAdmin(camera *domain.Camera) error {
+    return s.repo.UpdateCameraAdmin(camera)
+}
+
+func (s *service) DeleteCameraAdmin(cameraID int64) error {
+    return s.repo.DeleteCameraAdmin(cameraID)
 }
