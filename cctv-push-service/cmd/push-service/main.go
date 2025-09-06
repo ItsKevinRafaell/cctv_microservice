@@ -78,15 +78,20 @@ func (s *server) handleSend(w http.ResponseWriter, r *http.Request) {
 		} else {
 			log.Printf("sending to token[%d] len=%d prefix=%q", i, len(t), t[:12])
 		}
-		_, err := s.mc.Send(ctx, &messaging.Message{
-			Token:        t,
-			Notification: &messaging.Notification{Title: req.Title, Body: req.Body},
-			Data:         req.Data,
-		})
-		if err != nil {
-			log.Printf("send token failed (idx=%d): %v", i, err)
-			continue
-		}
+    msg := &messaging.Message{
+        Token:        t,
+        Notification: &messaging.Notification{Title: req.Title, Body: req.Body},
+        Data:         req.Data,
+        Android: &messaging.AndroidConfig{
+            Priority: "high",
+        },
+    }
+    id, err := s.mc.Send(ctx, msg)
+    if err != nil {
+        log.Printf("send token failed (idx=%d): %v", i, err)
+        continue
+    }
+    log.Printf("sent msg id=%s", id)
 		sent++
 	}
 	w.Header().Set("Content-Type", "application/json")
