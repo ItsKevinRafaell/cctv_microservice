@@ -22,9 +22,10 @@ func NewRepository(db *sql.DB) Repository {
 }
 
 func (r *repository) CreateReport(report *domain.AnomalyReport) error {
-	query := `INSERT INTO anomaly_reports (camera_id, anomaly_type, confidence, video_clip_url, reported_at) VALUES ($1, $2, $3, $4, $5)`
-	_, err := r.db.Exec(query, report.CameraID, report.AnomalyType, report.Confidence, report.VideoClipURL, time.Now())
-	return err
+    // Kembalikan ID agar bisa dikirimkan dalam payload notifikasi (untuk deep-link/detail)
+    query := `INSERT INTO anomaly_reports (camera_id, anomaly_type, confidence, video_clip_url, reported_at)
+              VALUES ($1, $2, $3, $4, $5) RETURNING id`
+    return r.db.QueryRow(query, report.CameraID, report.AnomalyType, report.Confidence, report.VideoClipURL, time.Now()).Scan(&report.ID)
 }
 
 func (r *repository) GetAllReportsByCompany(companyID int64) ([]domain.AnomalyReport, error) {

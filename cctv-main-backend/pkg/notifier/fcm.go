@@ -51,6 +51,8 @@ func (f *FCM) NotifyAnomaly(ctx context.Context, r *domain.AnomalyReport) error 
 	title := "Anomali Terdeteksi"
 	body := fmt.Sprintf("Kamera %d • %.0f%%", r.CameraID, r.Confidence*100)
     data := map[string]string{
+        "type":        "anomaly",
+        "anomaly_id":  fmt.Sprintf("%d", r.ID),
         "camera_id":    fmt.Sprintf("%d", r.CameraID),
         "confidence":   fmt.Sprintf("%.3f", r.Confidence),
         "video_url":    r.VideoClipURL,
