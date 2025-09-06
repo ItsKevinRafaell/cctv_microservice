@@ -1,49 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:media_kit_video/media_kit_video.dart';
 import 'package:anomeye/features/streaming/domain/stream_url_builder.dart';
-import 'package:anomeye/features/streaming/presentation/live_controller.dart';
-import 'package:media_kit/media_kit.dart';
+import 'package:video_player/video_player.dart';
 
 class LivePlayerScreen extends ConsumerStatefulWidget {
   final String cameraId;
-  const LivePlayerScreen({super.key, required this.cameraId});
+  final String? hlsUrl;
+  const LivePlayerScreen({super.key, required this.cameraId, this.hlsUrl});
 
   @override
   ConsumerState<LivePlayerScreen> createState() => _LivePlayerScreenState();
 }
 
 class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
-  bool _opened = false;
+  VideoPlayerController? _controller;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _openIfNeeded();
+  void initState() {
+    super.initState();
+    final String url = widget.hlsUrl ?? ref.read(streamUrlProvider(widget.cameraId));
+    _controller = VideoPlayerController.networkUrl(Uri.parse(url))
+      ..setLooping(true)
+      ..initialize().then((_) {
+        if (mounted) setState(() {});
+        _controller?.play();
+      }).catchError((e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to start live: $e')),
+          );
+        }
+      });
   }
 
-  Future<void> _openIfNeeded() async {
-    if (_opened) return;
-    _opened = true;
-    final player = ref.read(playerProvider);
-    final url = ref.read(streamUrlProvider(widget.cameraId));
-    // HLS live
-    try {
-      await player.open(Media(url), play: true);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to start live: $e')),
-        );
-      }
-    }
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final player = ref.watch(playerProvider);
-    final controller = VideoController(player);
-    final url = ref.watch(streamUrlProvider(widget.cameraId));
+    final String url = widget.hlsUrl ?? ref.watch(streamUrlProvider(widget.cameraId));
 
     return Scaffold(
       appBar: AppBar(
@@ -54,17 +52,21 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
             tooltip: 'Reopen',
             onPressed: () async {
               try {
-                await player.stop();
+                await _controller?.pause();
+                await _controller?.dispose();
               } catch (_) {}
-              try {
-                await player.open(Media(url), play: true);
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to reopen: $e')),
-                  );
-                }
-              }
+              _controller = VideoPlayerController.networkUrl(Uri.parse(url))
+                ..setLooping(true)
+                ..initialize().then((_) {
+                  if (mounted) setState(() {});
+                  _controller?.play();
+                }).catchError((e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to reopen: $e')),
+                    );
+                  }
+                });
             },
           ),
         ],
@@ -74,7 +76,11 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
           aspectRatio: 16 / 9,
           child: DecoratedBox(
             decoration: const BoxDecoration(color: Colors.black),
-            child: Video(controller: controller),
+            child: _controller != null && _controller!.value.isInitialized
+                ? VideoPlayer(_controller!)
+                : const Center(
+                    child: CircularProgressIndicator(),
+                  ),
           ),
         ),
       ),

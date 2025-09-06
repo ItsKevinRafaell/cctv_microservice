@@ -10,6 +10,7 @@ set -euo pipefail
 
 API_BASE="${API_BASE:-http://127.0.0.1:8080}"
 COMPANY_ID="${COMPANY_ID:-3}"
+COMPANY_NAME="${COMPANY_NAME:-Company 3}"
 SUPER_EMAIL="${SUPER_EMAIL:-superadmin@example.com}"
 SUPER_PASSWORD="${SUPER_PASSWORD:-ChangeMe123!}"
 NEW_USER_EMAIL="${NEW_USER_EMAIL:-company3admin@example.com}"
@@ -53,6 +54,15 @@ extract_json_number() { # key, json -> prints value or empty
   sed -n "s/.*\"${key}\"[[:space:]]*:[[:space:]]*\([0-9][0-9]*\).*/\1/p" <<<"$json"
 }
 
+# 0) Wait for backend health
+echo "[seed] Waiting for $API_BASE/healthz ..."
+tries=0
+until curl -fsS "$API_BASE/healthz" >/dev/null 2>&1; do
+  tries=$((tries+1))
+  if [[ "$tries" -gt 60 ]]; then echo "[seed] backend not ready after 60s" >&2; exit 1; fi
+  sleep 1
+done
+
 # 1) Login as superadmin
 echo "[seed] Login as superadmin ${SUPER_EMAIL}..."
 login_body=$(printf '{"email":"%s","password":"%s"}' "$SUPER_EMAIL" "$SUPER_PASSWORD")
@@ -63,13 +73,30 @@ SUPER_TOKEN=$(extract_json_string token "$body")
 AUTH_H="Authorization: Bearer $SUPER_TOKEN"
 echo "[seed] OK"
 
-# 2) Ensure company admin user exists
+# 2) Ensure company exists (resolve or create)
+echo "[seed] Resolve company id..."
+curl_json GET "$API_BASE/api/companies" "" "$AUTH_H"
+resolved_id=$(sed -n "s/.*\"id\"[[:space:]]*:[[:space:]]*\([0-9]\+\)[^}]*\"name\"[[:space:]]*:[[:space:]]*\"${COMPANY_NAME//\//\/}\".*/\1/p" <<<"$body" | head -n1)
+if [[ -z "$resolved_id" ]]; then
+  # Try match by requested id if present in list
+  resolved_id=$(sed -n "s/.*\"id\"[[:space:]]*:[[:space:]]*\(${COMPANY_ID}\)\b.*/\1/p" <<<"$body" | head -n1)
+fi
+if [[ -z "$resolved_id" ]]; then
+  echo "[seed] Create company: $COMPANY_NAME"
+  curl_json POST "$API_BASE/api/companies" "$(printf '{"name":"%s"}' "$COMPANY_NAME")" "$AUTH_H"
+  resolved_id=$(sed -n "s/.*\"company_id\"[[:space:]]*:[[:space:]]*\([0-9]\+\).*/\1/p" <<<"$body")
+fi
+if [[ -z "$resolved_id" ]]; then echo "[seed] Failed to resolve company id" >&2; exit 1; fi
+COMPANY_ID="$resolved_id"
+echo "[seed] Company id=$COMPANY_ID"
+
+# 3) Ensure company admin user exists
 echo "[seed] Ensure user $NEW_USER_EMAIL in company $COMPANY_ID..."
 register_body=$(printf '{"email":"%s","password":"%s","company_id":%s,"role":"company_admin"}' "$NEW_USER_EMAIL" "$NEW_USER_PASSWORD" "$COMPANY_ID")
 curl_json POST "$API_BASE/api/register" "$register_body" "$AUTH_H"
 if [[ "$code" =~ ^2 ]]; then echo "[seed] user created"; else echo "[seed] register non-2xx (likely exists): $code"; fi
 
-# 2b) Optional: login as that user to upsert FCM token later
+# 3b) Optional: login as that user to upsert FCM token later
 USER_TOKEN=""
 user_login_body=$(printf '{"email":"%s","password":"%s"}' "$NEW_USER_EMAIL" "$NEW_USER_PASSWORD")
 curl_json POST "$API_BASE/api/login" "$user_login_body"
@@ -81,7 +108,7 @@ if [[ -n "$FCM_TOKEN" && -n "$USER_TOKEN" ]]; then
   echo "[seed] FCM upsert status: $code"
 fi
 
-# 3) Create camera in company
+# 4) Create camera in company
 echo "[seed] Create camera stream_key=$STREAM_KEY for company=$COMPANY_ID..."
 create_cam_body=$(printf '{"name":"%s","location":"%s","stream_key":"%s","company_id":%s}' "Demo Cam $STREAM_KEY" "Demo" "$STREAM_KEY" "$COMPANY_ID")
 curl_json POST "$API_BASE/api/cameras" "$create_cam_body" "$AUTH_H"
@@ -99,7 +126,7 @@ fi
 [[ -z "$CAM_ID" ]] && { echo "[seed] Failed to obtain camera id"; exit 1; }
 echo "[seed] Camera id=$CAM_ID"
 
-# 4) Report anomaly
+# 5) Report anomaly
 echo "[seed] Report anomaly for camera_id=$CAM_ID ..."
 anom_body=$(printf '{"camera_id":%s,"anomaly_type":"%s","confidence":%s,"reported_at":"%s"%s}' \
   "$CAM_ID" "intrusion" "0.9" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \

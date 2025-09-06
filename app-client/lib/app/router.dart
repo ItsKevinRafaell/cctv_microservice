@@ -91,8 +91,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/live/:id',
         name: 'live',
-        builder: (context, state) =>
-            LivePlayerScreen(cameraId: state.pathParameters['id']!),
+        builder: (context, state) => LivePlayerScreen(
+          cameraId: state.pathParameters['id']!,
+          hlsUrl: state.extra is String ? state.extra as String : null,
+        ),
       ),
       GoRoute(
         path: '/anomalies/:id',
