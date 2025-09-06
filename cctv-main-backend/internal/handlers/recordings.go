@@ -2,12 +2,12 @@
 package handlers
 
 import (
-    "database/sql"
-    "encoding/json"
-    "log"
-    "net/http"
-    "strings"
-    "time"
+	"database/sql"
+	"encoding/json"
+	"log"
+	"net/http"
+	"strings"
+	"time"
 
 	"cctv-main-backend/internal/storage" // s3util kamu
 )
@@ -45,14 +45,14 @@ func (h *RecordingHandler) ListRecordings(w http.ResponseWriter, r *http.Request
 		http.Error(w, `{"error":"bad path"}`, http.StatusBadRequest)
 		return
 	}
-    cameraID := parts[2]
-    // Jika path berupa angka (id kamera), konversi ke stream_key terlebih dahulu
-    if isDigits(cameraID) {
-        var sk sql.NullString
-        if err := h.DB.QueryRow(`SELECT stream_key FROM cameras WHERE id=$1`, cameraID).Scan(&sk); err == nil && sk.Valid && sk.String != "" {
-            cameraID = sk.String
-        }
-    }
+	cameraID := parts[2]
+	// Jika path berupa angka (id kamera), konversi ke stream_key terlebih dahulu
+	if isDigits(cameraID) {
+		var sk sql.NullString
+		if err := h.DB.QueryRow(`SELECT stream_key FROM cameras WHERE id=$1`, cameraID).Scan(&sk); err == nil && sk.Valid && sk.String != "" {
+			cameraID = sk.String
+		}
+	}
 
 	// window waktu: default 24 jam terakhir
 	now := time.Now().UTC()
@@ -88,7 +88,7 @@ func (h *RecordingHandler) ListRecordings(w http.ResponseWriter, r *http.Request
 	defer rows.Close()
 
 	presign := r.URL.Query().Get("presign") == "1"
-    items := make([]RecordingItem, 0)
+	var items []RecordingItem
 	for rows.Next() {
 		var key string
 		var size int64
@@ -118,9 +118,13 @@ func (h *RecordingHandler) ListRecordings(w http.ResponseWriter, r *http.Request
 }
 
 func isDigits(s string) bool {
-    if s == "" { return false }
-    for _, c := range s {
-        if c < '0' || c > '9' { return false }
-    }
-    return true
+	if s == "" {
+		return false
+	}
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
 }

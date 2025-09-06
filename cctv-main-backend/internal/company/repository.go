@@ -38,7 +38,7 @@ func (r *repository) GetAllCompanies() ([]domain.Company, error) {
 	}
 	defer rows.Close()
 
-    companies := make([]domain.Company, 0)
+	var companies []domain.Company
 	for rows.Next() {
 		var c domain.Company
 		if err := rows.Scan(&c.ID, &c.Name, &c.CreatedAt); err != nil {

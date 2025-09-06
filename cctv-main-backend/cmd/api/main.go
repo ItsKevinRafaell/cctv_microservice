@@ -9,29 +9,29 @@ import (
 	"cctv-main-backend/internal/user"
 	"cctv-main-backend/pkg/database"
 	"cctv-main-backend/pkg/notifier"
-	"database/sql"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"net"
+	"net/http"
 	"os"
 	"runtime"
 	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
-    "golang.org/x/sys/unix"
+	"golang.org/x/sys/unix"
 )
 
 func main() {
-    db := database.NewConnection()
-    database.Migrate(db)
-    defer db.Close()
+	db := database.NewConnection()
+	database.Migrate(db)
+	defer db.Close()
 
-    // Seed optional superadmin if env provided
-    ensureSuperadmin(db)
+	// Seed optional superadmin if env provided
+	ensureSuperadmin(db)
 
 	mux := http.NewServeMux()
 
@@ -41,40 +41,40 @@ func main() {
 	companyRepo := company.NewRepository(db)
 	cameraRepo := camera.NewRepository(db)
 
-    // notifier: jika ada PUSH_SERVICE_URL gunakan HTTPNotifier, kalau tidak fallback FCM/log
-    var n notifier.Notifier
-    if base := os.Getenv("PUSH_SERVICE_URL"); base != "" {
-        secret := os.Getenv("PUSH_SERVICE_SECRET")
-        httpN, err := notifier.NewHTTPNotifierWithSecret(base, secret)
-        if err != nil {
-            log.Println("HTTPNotifier init error, fallback ke FCM/log:", err)
-        } else {
-            httpN.GetAdminTokens = userRepo.GetFCMTokensByCompanyAllRoles
-            httpN.GetCompanyIDByCameraID = cameraRepo.GetCompanyIDByCameraID
-            n = httpN
-            log.Println("Notifier: HTTP push-service")
-        }
-    }
-    if n == nil {
-        if cred := os.Getenv("FIREBASE_CREDENTIALS"); cred != "" {
-            fcm, err := notifier.NewFCM(context.Background(), cred)
-            if err != nil {
-                log.Println("FCM init error, fallback ke log:", err)
-                n = notifier.NewLogNotifier()
-            } else {
-                fcm.GetAdminTokens = userRepo.GetFCMTokensByCompanyAllRoles
-                fcm.GetCompanyIDByCameraID = cameraRepo.GetCompanyIDByCameraID
-                fcm.DeleteToken = userRepo.DeleteFCMTokenByValue
-                fcm.UseTopic = false
-                fcm.TopicPrefix = "alerts"
-                n = fcm
-                log.Println("Notifier: FCM (direct-to-token)")
-            }
-        } else {
-            n = notifier.NewLogNotifier()
-            log.Println("Notifier: LOG (fallback)")
-        }
-    }
+	// notifier: jika ada PUSH_SERVICE_URL gunakan HTTPNotifier, kalau tidak fallback FCM/log
+	var n notifier.Notifier
+	if base := os.Getenv("PUSH_SERVICE_URL"); base != "" {
+		secret := os.Getenv("PUSH_SERVICE_SECRET")
+		httpN, err := notifier.NewHTTPNotifierWithSecret(base, secret)
+		if err != nil {
+			log.Println("HTTPNotifier init error, fallback ke FCM/log:", err)
+		} else {
+			httpN.GetAdminTokens = userRepo.GetFCMTokensByCompanyAllRoles
+			httpN.GetCompanyIDByCameraID = cameraRepo.GetCompanyIDByCameraID
+			n = httpN
+			log.Println("Notifier: HTTP push-service")
+		}
+	}
+	if n == nil {
+		if cred := os.Getenv("FIREBASE_CREDENTIALS"); cred != "" {
+			fcm, err := notifier.NewFCM(context.Background(), cred)
+			if err != nil {
+				log.Println("FCM init error, fallback ke log:", err)
+				n = notifier.NewLogNotifier()
+			} else {
+				fcm.GetAdminTokens = userRepo.GetFCMTokensByCompanyAllRoles
+				fcm.GetCompanyIDByCameraID = cameraRepo.GetCompanyIDByCameraID
+				fcm.DeleteToken = userRepo.DeleteFCMTokenByValue
+				fcm.UseTopic = false
+				fcm.TopicPrefix = "alerts"
+				n = fcm
+				log.Println("Notifier: FCM (direct-to-token)")
+			}
+		} else {
+			n = notifier.NewLogNotifier()
+			log.Println("Notifier: LOG (fallback)")
+		}
+	}
 
 	minioInternal := getEnv("MINIO_INTERNAL_ENDPOINT", "http://minio:9000")
 	minioPublic := getEnv("MINIO_PUBLIC_ENDPOINT", "http://127.0.0.1:9000")
@@ -91,12 +91,12 @@ func main() {
 	if err := s3u.EnsureBucket(context.Background(), bucketArchive); err != nil {
 		log.Printf("ensure bucket %s: %v", bucketArchive, err)
 	}
-    recHandler := handlers.NewRecordingHandler(db, s3u, bucketArchive)
-    clipsBucket := getEnv("MINIO_BUCKET", "video-clips")
+	recHandler := handlers.NewRecordingHandler(db, s3u, bucketArchive)
+	clipsBucket := getEnv("MINIO_BUCKET", "video-clips")
 
 	// services + handlers
-    anomalyService := anomaly.NewService(anomalyRepo, n)
-    anomalyHandler := anomaly.NewHandler(anomalyService, s3u, clipsBucket)
+	anomalyService := anomaly.NewService(anomalyRepo, n)
+	anomalyHandler := anomaly.NewHandler(anomalyService, s3u, clipsBucket)
 
 	userService := user.NewService(userRepo)
 	userHandler := user.NewHandler(userService)
@@ -107,9 +107,9 @@ func main() {
 	cameraService := camera.NewService(cameraRepo)
 	cameraHandler := camera.NewHandler(cameraService)
 
-    // routes (sama seperti punyamu)
-    // Protect register: only authenticated callers can create users (enforced per-role in handler)
-    mux.HandleFunc("/api/register", authMiddleware(userHandler.Register))
+	// routes (sama seperti punyamu)
+	// Protect register: only authenticated callers can create users (enforced per-role in handler)
+	mux.HandleFunc("/api/register", authMiddleware(userHandler.Register))
 	mux.HandleFunc("/api/login", userHandler.Login)
 	mux.HandleFunc("/api/users", authMiddleware(userHandler.GetAllUsers))
 	mux.HandleFunc("/api/users/fcm-token", authMiddleware(userHandler.UpdateFCMToken))
@@ -125,31 +125,31 @@ func main() {
 	}))
 
 	mux.HandleFunc("/api/report-anomaly", anomalyHandler.CreateReport)
-    mux.HandleFunc("/api/anomalies", authMiddleware(anomalyHandler.GetAllReports))
-    mux.HandleFunc("/api/anomalies/", authMiddleware(anomalyHandler.GetDetail))
+	mux.HandleFunc("/api/anomalies", authMiddleware(anomalyHandler.GetAllReports))
+	mux.HandleFunc("/api/anomalies/", authMiddleware(anomalyHandler.GetDetail))
 	mux.HandleFunc("/api/anomalies/recent", authMiddleware(anomalyHandler.GetRecent))
 
-    mux.HandleFunc("/api/companies", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
-        switch r.Method {
-        case http.MethodPost:
-            RequireRole("superadmin", companyHandler.CreateCompany)(w, r)
-        case http.MethodGet:
-            RequireRole("superadmin", companyHandler.GetAllCompanies)(w, r)
-        default:
-            http.Error(w, "Metode tidak diizinkan", http.StatusMethodNotAllowed)
-        }
-    }))
+	mux.HandleFunc("/api/companies", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			RequireRole("superadmin", companyHandler.CreateCompany)(w, r)
+		case http.MethodGet:
+			RequireRole("superadmin", companyHandler.GetAllCompanies)(w, r)
+		default:
+			http.Error(w, "Metode tidak diizinkan", http.StatusMethodNotAllowed)
+		}
+	}))
 
-    mux.HandleFunc("/api/companies/", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
-        switch r.Method {
-        case http.MethodPut:
-            RequireRole("superadmin", companyHandler.UpdateCompany)(w, r)
-        case http.MethodDelete:
-            RequireRole("superadmin", companyHandler.DeleteCompany)(w, r)
-        default:
-            http.Error(w, "Metode tidak diizinkan", http.StatusMethodNotAllowed)
-        }
-    }))
+	mux.HandleFunc("/api/companies/", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPut:
+			RequireRole("superadmin", companyHandler.UpdateCompany)(w, r)
+		case http.MethodDelete:
+			RequireRole("superadmin", companyHandler.DeleteCompany)(w, r)
+		default:
+			http.Error(w, "Metode tidak diizinkan", http.StatusMethodNotAllowed)
+		}
+	}))
 
 	mux.HandleFunc("/api/cameras/", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		// /api/cameras/{id}/recordings  → GET daftar rekaman
@@ -205,8 +205,12 @@ func main() {
 		archiveOK := false
 		clipsOK := false
 		if s3u != nil {
-			if err := s3u.HeadBucketOnly(ctx, bucketArchive); err == nil { archiveOK = true }
-			if err := s3u.HeadBucketOnly(ctx, clipsBucket); err == nil { clipsOK = true }
+			if err := s3u.HeadBucketOnly(ctx, bucketArchive); err == nil {
+				archiveOK = true
+			}
+			if err := s3u.HeadBucketOnly(ctx, clipsBucket); err == nil {
+				clipsOK = true
+			}
 		}
 		s3["archive_bucket"] = archiveOK
 		s3["clips_bucket"] = clipsOK
@@ -214,12 +218,19 @@ func main() {
 		resp["s3"] = s3
 
 		// External services
-		type extRes struct{ Ok bool `json:"ok"`; Status int `json:"status"` }
+		type extRes struct {
+			Ok     bool `json:"ok"`
+			Status int  `json:"status"`
+		}
 		probe := func(url string, method string) extRes {
-			if url == "" { return extRes{Ok: false, Status: 0} }
+			if url == "" {
+				return extRes{Ok: false, Status: 0}
+			}
 			req, _ := http.NewRequestWithContext(ctx, method, url, nil)
 			res, err := http.DefaultClient.Do(req)
-			if err != nil { return extRes{Ok: false, Status: 0} }
+			if err != nil {
+				return extRes{Ok: false, Status: 0}
+			}
 			defer res.Body.Close()
 			return extRes{Ok: res.StatusCode > 0 && res.StatusCode < 600, Status: res.StatusCode}
 		}
@@ -229,19 +240,27 @@ func main() {
 		aiBase := getEnv("AI_WORKER_URL", "")
 
 		ing := extRes{Ok: false, Status: 0}
-		if ingestBase != "" { ing = probe(ingestBase+"/healthz", http.MethodGet) }
+		if ingestBase != "" {
+			ing = probe(ingestBase+"/healthz", http.MethodGet)
+		}
 		resp["ingestion"] = ing
 
 		aw := extRes{Ok: false, Status: 0}
-		if aiBase != "" { aw = probe(aiBase+"/healthz", http.MethodGet) }
+		if aiBase != "" {
+			aw = probe(aiBase+"/healthz", http.MethodGet)
+		}
 		resp["ai_worker"] = aw
 
 		ps := extRes{Ok: false, Status: 0}
-		if pushBase != "" { ps = probe(pushBase+"/send", http.MethodOptions) }
+		if pushBase != "" {
+			ps = probe(pushBase+"/send", http.MethodOptions)
+		}
 		resp["push_service"] = ps
 
 		ms := extRes{Ok: false, Status: 0}
-		if mediaBase != "" { ms = probe(mediaBase, http.MethodGet) }
+		if mediaBase != "" {
+			ms = probe(mediaBase, http.MethodGet)
+		}
 		resp["media_server"] = ms
 
 		// Backend self status (this handler is served by backend)
@@ -256,13 +275,17 @@ func main() {
 				parts := strings.SplitN(amqp, "@", 2)
 				hostPart := parts[1]
 				// strip scheme leftovers
-				if idx := strings.Index(hostPart, "/"); idx >= 0 { hostPart = hostPart[:idx] }
+				if idx := strings.Index(hostPart, "/"); idx >= 0 {
+					hostPart = hostPart[:idx]
+				}
 				hostport = hostPart
 			}
 			if hostport == "" {
 				// fallback: remove scheme
 				x := strings.TrimPrefix(amqp, "amqp://")
-				if i := strings.Index(x, "/"); i >= 0 { x = x[:i] }
+				if i := strings.Index(x, "/"); i >= 0 {
+					x = x[:i]
+				}
 				hostport = x
 			}
 			conn, err := net.DialTimeout("tcp", hostport, 1500*time.Millisecond)
@@ -278,14 +301,14 @@ func main() {
 		runtime.ReadMemStats(&msnap)
 		resp["system"] = map[string]any{
 			"goroutines": runtime.NumGoroutine(),
-			"mem_alloc": msnap.Alloc,
-			"mem_sys": msnap.Sys,
+			"mem_alloc":  msnap.Alloc,
+			"mem_sys":    msnap.Sys,
 		}
 		var sfs unix.Statfs_t
 		if err := unix.Statfs("/", &sfs); err == nil {
 			resp["disk"] = map[string]any{
 				"total": sfs.Blocks * uint64(sfs.Bsize),
-				"free": sfs.Bavail * uint64(sfs.Bsize),
+				"free":  sfs.Bavail * uint64(sfs.Bsize),
 			}
 		}
 
@@ -322,56 +345,56 @@ func main() {
 }
 
 func getEnv(key, def string) string {
-    if val := os.Getenv(key); val != "" {
-        return val
-    }
-    return def
+	if val := os.Getenv(key); val != "" {
+		return val
+	}
+	return def
 }
 
 // ensureSuperadmin creates or elevates a superadmin account if env vars are set
 func ensureSuperadmin(db *sql.DB) {
-    email := os.Getenv("SUPERADMIN_EMAIL")
-    password := os.Getenv("SUPERADMIN_PASSWORD")
-    if email == "" || password == "" {
-        return
-    }
+	email := os.Getenv("SUPERADMIN_EMAIL")
+	password := os.Getenv("SUPERADMIN_PASSWORD")
+	if email == "" || password == "" {
+		return
+	}
 
-    // Check if user exists
-    var exists bool
-    err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE email=$1)", email).Scan(&exists)
-    if err != nil {
-        log.Println("seed superadmin check error:", err)
-        return
-    }
-    if exists {
-        // Elevate role to superadmin
-        if _, err := db.Exec("UPDATE users SET role='superadmin' WHERE email=$1", email); err != nil {
-            log.Println("seed superadmin elevate error:", err)
-        } else {
-            log.Println("Superadmin elevated:", email)
-        }
-        return
-    }
+	// Check if user exists
+	var exists bool
+	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE email=$1)", email).Scan(&exists)
+	if err != nil {
+		log.Println("seed superadmin check error:", err)
+		return
+	}
+	if exists {
+		// Elevate role to superadmin
+		if _, err := db.Exec("UPDATE users SET role='superadmin' WHERE email=$1", email); err != nil {
+			log.Println("seed superadmin elevate error:", err)
+		} else {
+			log.Println("Superadmin elevated:", email)
+		}
+		return
+	}
 
-    // Create a system company if not exists
-    var companyID int64
-    if err := db.QueryRow("SELECT id FROM companies WHERE name=$1", "System").Scan(&companyID); err != nil {
-        // create
-        if err := db.QueryRow("INSERT INTO companies(name) VALUES($1) RETURNING id", "System").Scan(&companyID); err != nil {
-            log.Println("create System company error:", err)
-            return
-        }
-    }
+	// Create a system company if not exists
+	var companyID int64
+	if err := db.QueryRow("SELECT id FROM companies WHERE name=$1", "System").Scan(&companyID); err != nil {
+		// create
+		if err := db.QueryRow("INSERT INTO companies(name) VALUES($1) RETURNING id", "System").Scan(&companyID); err != nil {
+			log.Println("create System company error:", err)
+			return
+		}
+	}
 
-    // Hash password and insert user
-    hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-    if err != nil {
-        log.Println("bcrypt error:", err)
-        return
-    }
-    if _, err := db.Exec("INSERT INTO users(email, password_hash, company_id, role) VALUES($1,$2,$3,$4)", email, string(hash), companyID, "superadmin"); err != nil {
-        log.Println("insert superadmin error:", err)
-        return
-    }
-    log.Println("Superadmin created:", email)
+	// Hash password and insert user
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Println("bcrypt error:", err)
+		return
+	}
+	if _, err := db.Exec("INSERT INTO users(email, password_hash, company_id, role) VALUES($1,$2,$3,$4)", email, string(hash), companyID, "superadmin"); err != nil {
+		log.Println("insert superadmin error:", err)
+		return
+	}
+	log.Println("Superadmin created:", email)
 }

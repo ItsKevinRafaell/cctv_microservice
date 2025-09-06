@@ -12,16 +12,12 @@ import (
 var jwtSecret = []byte("kunci-rahasia-yang-sangat-aman-dan-panjang")
 
 type Service interface {
-    Register(user *domain.User) error
-    Login(input *domain.User) (string, error)
-    FindUsersByCompany(companyID int64) ([]domain.User, error)
-    GetUserRole(userID, companyID int64) (string, error)
-    UpdateRole(userID, companyID int64, role string) error
-    UpdateEmail(userID, companyID int64, email string) error
-    UpdatePassword(userID, companyID int64, password string) error
-    UpdateName(userID, companyID int64, name string) error
-    Delete(userID, companyID int64) error
-    SaveFCMToken(userID int64, fcmToken string) error
+	Register(user *domain.User) error
+	Login(input *domain.User) (string, error)
+	FindUsersByCompany(companyID int64) ([]domain.User, error)
+	UpdateRole(userID, companyID int64, role string) error
+	Delete(userID, companyID int64) error
+	SaveFCMToken(userID int64, fcmToken string) error
 }
 
 type service struct {
@@ -70,31 +66,13 @@ func (s *service) Register(user *domain.User) error {
 }
 
 func (s *service) FindUsersByCompany(companyID int64) ([]domain.User, error) {
-    return s.repo.GetUsersByCompanyID(companyID)
-}
-
-func (s *service) GetUserRole(userID, companyID int64) (string, error) {
-    return s.repo.GetUserRoleByCompany(userID, companyID)
+	return s.repo.GetUsersByCompanyID(companyID)
 }
 
 func (s *service) UpdateRole(userID, companyID int64, role string) error {
-    return s.repo.UpdateUserRole(userID, companyID, role)
+	return s.repo.UpdateUserRole(userID, companyID, role)
 }
 
-func (s *service) UpdateEmail(userID, companyID int64, email string) error {
-    return s.repo.UpdateUserEmail(userID, companyID, email)
-}
-
-func (s *service) UpdatePassword(userID, companyID int64, password string) error {
-    // hash password
-    hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-    if err != nil { return err }
-    return s.repo.UpdateUserPassword(userID, companyID, string(hash))
-}
-
-func (s *service) UpdateName(userID, companyID int64, name string) error {
-    return s.repo.UpdateUserName(userID, companyID, name)
-}
 func (s *service) Delete(userID, companyID int64) error {
 	return s.repo.DeleteUser(userID, companyID)
 }
