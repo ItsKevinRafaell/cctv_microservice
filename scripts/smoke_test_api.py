@@ -4,7 +4,6 @@ import requests
 
 API_MAIN = os.getenv('API_MAIN_URL', 'http://localhost:8080')
 API_INGEST = os.getenv('API_INGEST_URL', 'http://localhost:8081')
-PUSH_URL = os.getenv('PUSH_SERVICE_URL', 'http://localhost:8090')
 
 def rand_email():
     suffix = ''.join(random.choices(string.ascii_lowercase+string.digits, k=6))
@@ -107,20 +106,6 @@ def main():
         _print("Ingestion health", False, str(e))
 
     print("\nAll checks done. If FCM token was set, a push should arrive.")
-
-    # 13) Optional: direct push via push-service (for visible app notification)
-    if fcm_token:
-        try:
-            payload = {
-                "tokens": [fcm_token],
-                "title": "Anomaly Detected",
-                "body": "SmokeTest cam",
-                "data": {"type": "anomaly", "camera_id": str(camera_id), "anomaly_id": "smoke-test"}
-            }
-            rr = requests.post(f"{PUSH_URL}/send", json=payload, headers={"X-Push-Secret": os.getenv('PUSH_SERVICE_SECRET','change-me-secret')}, timeout=5)
-            _print("Direct push-service", rr.ok, f"status={rr.status_code}")
-        except Exception as e:
-            _print("Direct push-service", False, str(e))
 
 if __name__ == '__main__':
     main()
