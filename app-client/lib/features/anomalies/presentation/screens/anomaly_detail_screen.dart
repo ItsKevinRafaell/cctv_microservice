@@ -16,6 +16,7 @@ class AnomalyDetailScreen extends ConsumerStatefulWidget {
 
 class _AnomalyDetailScreenState extends ConsumerState<AnomalyDetailScreen> {
   Player? _player;
+  bool _clipTried = false;
 
   @override
   void dispose() {
@@ -23,15 +24,24 @@ class _AnomalyDetailScreenState extends ConsumerState<AnomalyDetailScreen> {
     super.dispose();
   }
 
-  Future<void> _ensureOpen(String? url) async {
-    if (url == null || url.isEmpty) return;
-    _player ??= Player();
+  Future<void> _playClip(String? url) async {
+    if (url == null || url.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Clip URL tidak tersedia.')),
+        );
+      }
+      return;
+    }
+    _clipTried = true;
     try {
+      _player ??= Player();
       await _player!.open(Media(url), play: true);
+      setState(() {});
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to play clip: $e')),
+          SnackBar(content: Text('Gagal memutar clip: $e')),
         );
       }
     }
@@ -47,8 +57,7 @@ class _AnomalyDetailScreenState extends ConsumerState<AnomalyDetailScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
         data: (anomaly) {
-          // Buka clip jika ada
-          _ensureOpen(anomaly.videoClipUrl);
+          final clipUrl = anomaly.videoClipUrl;
           final relatedAnomaliesState = ref.watch(anomaliesListProvider(anomaly.cameraId));
           final controller = _player != null ? VideoController(_player!) : null;
 
@@ -76,16 +85,26 @@ class _AnomalyDetailScreenState extends ConsumerState<AnomalyDetailScreen> {
                             decoration: const BoxDecoration(color: Colors.black),
                             child: controller != null
                                 ? Video(controller: controller)
-                                : const Center(
-                                    child: Icon(
-                                      Icons.play_circle_fill_rounded,
+                                : Center(
+                                    child: IconButton(
+                                      iconSize: 64,
                                       color: Colors.white70,
-                                      size: 64,
+                                      icon: const Icon(Icons.play_circle_fill_rounded),
+                                      onPressed: () => _playClip(clipUrl),
+                                      tooltip: 'Play Clip',
                                     ),
                                   ),
                           ),
                         ),
                       ),
+                      if (clipUrl != null && clipUrl.isNotEmpty && _player == null && _clipTried)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            'Jika gagal memutar, pastikan URL bisa diakses dari emulator: $clipUrl',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                          ),
+                        ),
                       const SizedBox(height: 24),
                       Text(anomaly.anomalyType, style: textTheme.headlineMedium),
                       const SizedBox(height: 8),

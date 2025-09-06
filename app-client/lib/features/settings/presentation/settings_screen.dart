@@ -2,6 +2,7 @@ import 'package:anomeye/app/di.dart';
 import 'package:anomeye/features/notifications/presentation/fcm_controller.dart';
 import 'package:anomeye/shared/widgets/app_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -115,6 +116,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             value: hasNotificationPermission,
             onChanged: _handleNotificationPermission,
             secondary: const Icon(Icons.notifications_active_outlined),
+          ),
+          if (fcmState.token != null) ListTile(
+            leading: const Icon(Icons.vpn_key_outlined),
+            title: const Text('FCM Token'),
+            subtitle: Text(
+              fcmState.token!,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.copy),
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: fcmState.token!));
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('FCM token copied to clipboard')),
+                  );
+                }
+              },
+            ),
           ),
 
           // Grup Pengaturan Kamera
