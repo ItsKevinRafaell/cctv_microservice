@@ -1,0 +1,48 @@
+name: anomeye
+description: Clean Flutter app scaffold for AnomEye (CCTV anomaly detection)
+publish_to: "none"
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.5.1
+  go_router: ^14.2.1
+  dio: ^5.6.0
+
+  # Model & JSON
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.9.0
+
+  # Secure storage & player
+  flutter_secure_storage: ^9.2.2
+
+  # Media Kit (lengkap)
+  media_kit: ^1.1.10
+  media_kit_video: ^1.2.5
+  media_kit_libs_android_video: ^1.3.7
+  media_kit_libs_ios_video: ^1.1.4
+  media_kit_libs_macos_video: ^1.1.4
+  media_kit_libs_windows_video: ^1.0.11
+  media_kit_libs_linux: ^1.1.4
+
+  firebase_core: ^2.32.0
+  firebase_messaging: ^14.9.4
+  intl: ^0.20.2
+  permission_handler: ^12.0.1
+  flutter_local_notifications: ^17.2.1+1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  build_runner: ^2.4.12
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/

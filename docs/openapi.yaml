@@ -1,0 +1,259 @@
+openapi: 3.0.3
+info:
+  title: CCTV Microservice API
+  version: 1.0.0
+  description: |
+    REST API for frontend integration. Includes user auth, companies, cameras, anomalies, recordings, and ingestion upload.
+servers:
+  - url: http://localhost:8080
+    description: Main Backend
+  - url: http://localhost:8081
+    description: Ingestion Service
+paths:
+  /api/register:
+    post:
+      summary: Register user
+      description: Creates a user for a company. Role defaults to "user".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterUser'
+      responses:
+        '201': { description: Created }
+        '409': { description: Conflict }
+  /api/login:
+    post:
+      summary: Login and get JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginUser'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+  /api/users:
+    get:
+      summary: List users in company
+      security: [ { bearerAuth: [] } ]
+      responses:
+        '200':
+          description: OK
+  /api/users/fcm-token:
+    post:
+      summary: Update current user's FCM token
+      security: [ { bearerAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fcm_token: { type: string }
+      responses: { '200': { description: OK } }
+  /api/companies:
+    post:
+      summary: Create company
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Company'
+      responses: { '201': { description: Created } }
+    get:
+      summary: List companies
+      responses: { '200': { description: OK } }
+  /api/companies/{id}:
+    put:
+      summary: Update company
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Company'
+      responses: { '200': { description: OK }, '404': { description: Not Found } }
+    delete:
+      summary: Delete company
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses: { '200': { description: OK }, '404': { description: Not Found } }
+  /api/cameras:
+    post:
+      summary: Create camera (company-scoped)
+      security: [ { bearerAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CameraCreate'
+      responses: { '201': { description: Created } }
+    get:
+      summary: List cameras (company-scoped)
+      security: [ { bearerAuth: [] } ]
+      responses: { '200': { description: OK } }
+  /api/cameras/{id}:
+    put:
+      summary: Update camera
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CameraUpdate'
+      responses: { '200': { description: OK } }
+    delete:
+      summary: Delete camera
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses: { '200': { description: OK } }
+  /api/cameras/{id}/recordings:
+    get:
+      summary: List recordings in time window
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+        - in: query
+          name: presign
+          schema: { type: string, enum: ['0','1'] }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecordingResponse'
+  /api/report-anomaly:
+    post:
+      summary: Submit anomaly report
+      description: Used by AI worker; no auth middleware.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnomalyReportCreate'
+      responses: { '200': { description: OK } }
+  /api/anomalies:
+    get:
+      summary: List all anomaly reports (company-scoped)
+      security: [ { bearerAuth: [] } ]
+      responses: { '200': { description: OK } }
+  /ingest/video:
+    post:
+      summary: Upload short clip to MinIO & enqueue analysis
+      description: Multipart form with video and `camera_id`.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                video_clip:
+                  type: string
+                  format: binary
+                camera_id:
+                  type: string
+      responses: { '200': { description: OK }, '400': { description: Bad Request } }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    RegisterUser:
+      type: object
+      required: [email, password, company_id]
+      properties:
+        email: { type: string }
+        password: { type: string }
+        company_id: { type: integer }
+        role: { type: string, enum: [user, company_admin] }
+    LoginUser:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string }
+        password: { type: string }
+    Company:
+      type: object
+      properties:
+        name: { type: string }
+        address: { type: string }
+    CameraCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        location: { type: string }
+    CameraUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        location: { type: string }
+    RecordingItem:
+      type: object
+      properties:
+        key: { type: string }
+        size: { type: integer, format: int64 }
+        url: { type: string }
+    RecordingResponse:
+      type: object
+      properties:
+        camera_id: { type: string }
+        from: { type: string, format: date-time }
+        to: { type: string, format: date-time }
+        count: { type: integer }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/RecordingItem' }
+    AnomalyReportCreate:
+      type: object
+      required: [camera_id]
+      properties:
+        camera_id: { type: integer }
+        anomaly_type: { type: string }
+        confidence: { type: number, format: float }
+        video_clip_url: { type: string }

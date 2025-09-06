@@ -1,0 +1,104 @@
+package user
+
+import (
+	"cctv-main-backend/internal/domain"
+	"errors"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
+)
+
+var jwtSecret = []byte("kunci-rahasia-yang-sangat-aman-dan-panjang")
+
+type Service interface {
+    Register(user *domain.User) error
+    Login(input *domain.User) (string, error)
+    FindUsersByCompany(companyID int64) ([]domain.User, error)
+    GetUserRole(userID, companyID int64) (string, error)
+    UpdateRole(userID, companyID int64, role string) error
+    UpdateEmail(userID, companyID int64, email string) error
+    UpdatePassword(userID, companyID int64, password string) error
+    UpdateName(userID, companyID int64, name string) error
+    Delete(userID, companyID int64) error
+    SaveFCMToken(userID int64, fcmToken string) error
+}
+
+type service struct {
+	repo Repository
+}
+
+func NewService(repo Repository) Service {
+	return &service{repo: repo}
+}
+
+func (s *service) Login(input *domain.User) (string, error) {
+	user, err := s.repo.GetUserByEmail(input.Email)
+	if err != nil {
+		return "", errors.New("email atau password salah")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(input.Password))
+	if err != nil {
+		return "", errors.New("email atau password salah")
+	}
+
+	claims := jwt.MapClaims{
+		"user_id":    user.ID,
+		"email":      user.Email,
+		"company_id": user.CompanyID,
+		"role":       user.Role,
+		"exp":        time.Now().Add(time.Hour * 72).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtSecret)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+func (s *service) Register(user *domain.User) error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	user.PasswordHash = string(hashedPassword)
+	return s.repo.CreateUser(user)
+}
+
+func (s *service) FindUsersByCompany(companyID int64) ([]domain.User, error) {
+    return s.repo.GetUsersByCompanyID(companyID)
+}
+
+func (s *service) GetUserRole(userID, companyID int64) (string, error) {
+    return s.repo.GetUserRoleByCompany(userID, companyID)
+}
+
+func (s *service) UpdateRole(userID, companyID int64, role string) error {
+    return s.repo.UpdateUserRole(userID, companyID, role)
+}
+
+func (s *service) UpdateEmail(userID, companyID int64, email string) error {
+    return s.repo.UpdateUserEmail(userID, companyID, email)
+}
+
+func (s *service) UpdatePassword(userID, companyID int64, password string) error {
+    // hash password
+    hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+    if err != nil { return err }
+    return s.repo.UpdateUserPassword(userID, companyID, string(hash))
+}
+
+func (s *service) UpdateName(userID, companyID int64, name string) error {
+    return s.repo.UpdateUserName(userID, companyID, name)
+}
+func (s *service) Delete(userID, companyID int64) error {
+	return s.repo.DeleteUser(userID, companyID)
+}
+
+func (s *service) SaveFCMToken(userID int64, fcmToken string) error {
+	return s.repo.UpdateFCMToken(userID, fcmToken)
+}

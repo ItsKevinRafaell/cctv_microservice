@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "571000132978",
+    "project_id": "anomeye",
+    "storage_bucket": "anomeye.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:571000132978:android:fd711bf28da9cb121e79eb",
+        "android_client_info": {
+          "package_name": "com.example.anomeye"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCbUj6IyeBYCEoNtXiojZ6SwrAgV8UjbR4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
