@@ -23,8 +23,8 @@ services:
       - MEDIAMTX_PUBLIC_WEBRTC_WS_PORT=8889
       # ---- S3/MinIO untuk presign rekaman panjang ----
       - MINIO_INTERNAL_ENDPOINT=http://minio:9000
-      - MINIO_PUBLIC_ENDPOINT=http://127.0.0.1:9000
-      - MINIO_PUBLIC_BASE_URL=http://127.0.0.1:9000
+      - MINIO_PUBLIC_ENDPOINT=http://10.0.2.2:9000
+      - MINIO_PUBLIC_BASE_URL=http://10.0.2.2:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minio-secret-key
       - MINIO_USE_PRESIGN=true
@@ -286,10 +286,48 @@ services:
       - recordings:/recordings
       - ./scripts:/app:ro
     environment:
-      - SEGMENT_SECONDS=3600
-      - CAMERA_LIST=cam1=rtsp://mediamtx:8554/cam1,cam2=rtsp://mediamtx:8554/cam2
+      - SEGMENT_SECONDS=60
+      - CAMERA_LIST=cam3=rtsp://mediamtx:8554/cam3
     # Override ffmpeg entrypoint so our shell script runs properly
     entrypoint: ["/bin/sh", "/app/archiver_manager.sh"]
+
+  # One-off test publisher for cam3 (start with: docker compose up -d test_publisher_cam3)
+  test_publisher_cam3:
+    image: jrottenberg/ffmpeg:5.1-alpine
+    restart: unless-stopped
+    depends_on: [mediamtx]
+    networks: [cctv_network]
+    command:
+      - -re
+      - -f
+      - lavfi
+      - -i
+      - testsrc=size=640x360:rate=25
+      - -f
+      - lavfi
+      - -i
+      - sine=frequency=1000:sample_rate=48000
+      - -c:v
+      - libx264
+      - -preset
+      - veryfast
+      - -tune
+      - zerolatency
+      - -pix_fmt
+      - yuv420p
+      - -profile:v
+      - main
+      - -g
+      - "50"
+      - -c:a
+      - aac
+      - -b:a
+      - 128k
+      - -f
+      - rtsp
+      - -rtsp_transport
+      - tcp
+      - rtsp://mediamtx:8554/cam3
 
 
 # Definisikan network dan volume

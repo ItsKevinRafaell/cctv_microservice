@@ -16,7 +16,7 @@ SUPER_PASSWORD="${SUPER_PASSWORD:-ChangeMe123!}"
 NEW_USER_EMAIL="${NEW_USER_EMAIL:-company3admin@example.com}"
 NEW_USER_PASSWORD="${NEW_USER_PASSWORD:-Passw0rd123!}"
 STREAM_KEY="${STREAM_KEY:-cam3}"
-# For presign, use path-like: /video-clips/cam3/clip_001.mp4
+# Default clip path for anomaly payload (file upload handled separately by you)
 CLIP_PATH="${CLIP_PATH:-/video-clips/cam3/clip_001.mp4}"
 # If your backend enforces a shared worker token for /api/report-anomaly
 WORKER_SHARED_TOKEN="${WORKER_SHARED_TOKEN:-}"
@@ -126,7 +126,7 @@ fi
 [[ -z "$CAM_ID" ]] && { echo "[seed] Failed to obtain camera id"; exit 1; }
 echo "[seed] Camera id=$CAM_ID"
 
-# 5) Report anomaly
+# 5) Report anomaly (with clip if CLIP_PATH set)
 echo "[seed] Report anomaly for camera_id=$CAM_ID ..."
 anom_body=$(printf '{"camera_id":%s,"anomaly_type":"%s","confidence":%s,"reported_at":"%s"%s}' \
   "$CAM_ID" "intrusion" "0.9" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
@@ -135,6 +135,17 @@ extra_header=()
 [[ -n "$WORKER_SHARED_TOKEN" ]] && extra_header+=("X-Worker-Token: $WORKER_SHARED_TOKEN")
 curl_json POST "$API_BASE/api/report-anomaly" "$anom_body" "${extra_header[@]}"
 echo "[seed] anomaly status: $code"
+
+# 7) Trigger test notification (uses latest anomaly, scoped to company user)
+echo "[seed] trigger test notification..."
+if [[ -n "${USER_TOKEN:-}" ]]; then
+  curl_json POST "$API_BASE/api/notifications/test" '{}' "Authorization: Bearer $USER_TOKEN"
+  TOKENS=$(sed -n "s/.*\"tokens_count\"[[:space:]]*:[[:space:]]*\([0-9]\+\).*/\1/p" <<<"$body")
+  ANID=$(sed -n "s/.*\"anomaly_id\"[[:space:]]*:[[:space:]]*\([0-9]\+\).*/\1/p" <<<"$body")
+  echo "[seed] notif status: $code (anomaly_id=${ANID:-?}, tokens=${TOKENS:-?})"
+else
+  echo "[seed] WARN: company user token not available, skipping test notification"
+fi
 
 echo
 echo "Next steps:"
