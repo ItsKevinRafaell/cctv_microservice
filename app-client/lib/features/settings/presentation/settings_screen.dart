@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:dio/dio.dart' show DioException;
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -127,8 +128,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 final res = await dio.post('/api/notifications/test');
                 if (!mounted) return;
                 final id = res.data['anomaly_id'] ?? '-';
+                final cnt = res.data['tokens_count'] ?? 'unknown';
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Test push sent for anomaly $id')),
+                  SnackBar(content: Text('Test push sent (id=$id, tokens=$cnt)')),
+                );
+              } on DioException catch (e) {
+                if (!mounted) return;
+                final code = e.response?.statusCode;
+                final data = e.response?.data;
+                final msg = data is String
+                    ? data
+                    : (data is Map && data['error'] is String
+                        ? data['error']
+                        : e.message ?? 'unknown error');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed ($code): $msg')),
                 );
               } catch (e) {
                 if (!mounted) return;

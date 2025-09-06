@@ -3,7 +3,8 @@ services:
   archiver_manager:
     environment:
       SEGMENT_SECONDS: "60"
-      CAMERA_LIST: "cam1=rtsp://mediamtx:8554/cam1,cam2=rtsp://mediamtx:8554/cam2,cam3=rtsp://mediamtx:8554/cam3"
+      # Keep it simple for E2E: record cam3 only (avoid RTSP 404 spam)
+      CAMERA_LIST: "cam3=rtsp://mediamtx:8554/cam3"
 
   recording_indexer:
     environment:

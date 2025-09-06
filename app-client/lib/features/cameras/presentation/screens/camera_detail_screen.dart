@@ -65,9 +65,9 @@ class _CameraDetailScreenState extends ConsumerState<CameraDetailScreen> {
                             label: const Text('Watch Live'),
                             onPressed: () {
                               // id di app = stream_key
-                              // gunakan go_router
+                              // Prefer computed HLS URL based on app env to ensure emulator reachability
                               // ignore: use_build_context_synchronously
-                              context.push('/live/${camera.id}');
+                              context.push('/live/${camera.id}', extra: camera.streamUrl);
                             },
                           ),
                         ),

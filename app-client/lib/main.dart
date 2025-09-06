@@ -11,7 +11,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:anomeye/app/router.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:anomeye/firebase_options.dart';
-import 'package:media_kit/media_kit.dart';
 
 // GlobalKey tetap di sini
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
@@ -19,8 +18,6 @@ final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 void main() async {
   // Hanya inisialisasi fundamental yang diletakkan di sini
   WidgetsFlutterBinding.ensureInitialized();
-  // Init media_kit before any Player is created (synchronous on Flutter)
-  MediaKit.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -50,16 +47,22 @@ class _AnomEyeAppState extends ConsumerState<AnomEyeApp> {
     // Jalankan setelah frame pertama selesai di-build
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // 1. Dengarkan notifikasi foreground
+      final router = ref.read(appRouterProvider);
       FirebaseMessaging.onMessage.listen((msg) {
-        final title = msg.notification?.title ?? '(no title)';
-        final body = msg.notification?.body ?? '(no body)';
+        final title = msg.notification?.title ?? 'New alert';
+        final body = msg.notification?.body ?? '';
         scaffoldMessengerKey.currentState?.showSnackBar(
-          SnackBar(content: Text('Push FG: $title — $body')),
+          SnackBar(
+            content: Text('$title — $body'),
+            action: SnackBarAction(
+              label: 'VIEW',
+              onPressed: () => handleNotificationNavigation(router, msg),
+            ),
+          ),
         );
       });
 
       // 2. Wire navigation untuk notifikasi
-      final router = ref.read(appRouterProvider);
       await wireNotificationNavigation(ref, router);
     });
   }

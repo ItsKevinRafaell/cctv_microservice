@@ -187,7 +187,7 @@ func main() {
 	}))
 
 	// Test notification endpoint: send push for given anomaly_id or latest anomaly in company
-	mux.HandleFunc("/api/notifications/test", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
+    mux.HandleFunc("/api/notifications/test", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Metode tidak diizinkan", http.StatusMethodNotAllowed)
 			return
@@ -217,39 +217,55 @@ func main() {
 			AnomalyID int64 `json:"anomaly_id"`
 		}
 		_ = json.NewDecoder(r.Body).Decode(&payload)
-		var rep *domain.AnomalyReport
-		if payload.AnomalyID > 0 {
-			if x, err := anomalyService.GetDetail(companyID, payload.AnomalyID); err == nil {
-				rep = x
-			} else {
-				http.Error(w, "Anomali tidak ditemukan", http.StatusNotFound)
-				return
-			}
-		} else {
-			if list, err := anomalyService.ListRecent(companyID, 1); err == nil && len(list) > 0 {
-				rep = &list[0]
-			}
-			if rep == nil {
-				http.Error(w, "Tidak ada anomaly untuk perusahaan ini", http.StatusBadRequest)
-				return
-			}
-		}
-		if rep.AnomalyType == "" {
-			rep.AnomalyType = "anomaly"
-		}
-		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-		defer cancel()
-		if err := n.NotifyAnomaly(ctx, rep); err != nil {
-			http.Error(w, "Gagal mengirim notifikasi", http.StatusBadGateway)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]any{
-			"ok": true,
-			"anomaly_id": rep.ID,
-			"camera_id": rep.CameraID,
-		})
-	}))
+        var rep *domain.AnomalyReport
+        if payload.AnomalyID > 0 {
+            if x, err := anomalyService.GetDetail(companyID, payload.AnomalyID); err == nil {
+                rep = x
+            } else {
+                http.Error(w, "Anomali tidak ditemukan", http.StatusNotFound)
+                return
+            }
+        } else {
+            if list, err := anomalyService.ListRecent(companyID, 1); err == nil && len(list) > 0 {
+                rep = &list[0]
+            }
+            if rep == nil {
+                http.Error(w, "Tidak ada anomaly untuk perusahaan ini", http.StatusBadRequest)
+                return
+            }
+        }
+        if rep.AnomalyType == "" {
+            rep.AnomalyType = "anomaly"
+        }
+        // Debug: tentukan target company berdasarkan camera id
+        targetCompanyID := companyID
+        if rep.CameraID > 0 {
+            if cid, err := cameraRepo.GetCompanyIDByCameraID(r.Context(), rep.CameraID); err == nil {
+                targetCompanyID = cid
+            }
+        }
+        // Ambil tokens untuk info
+        tokens := []string{}
+        if userRepo != nil {
+            if list, err := userRepo.GetFCMTokensByCompanyAllRoles(r.Context(), targetCompanyID); err == nil {
+                tokens = list
+            }
+        }
+        ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+        defer cancel()
+        if err := n.NotifyAnomaly(ctx, rep); err != nil {
+            http.Error(w, "Gagal mengirim notifikasi", http.StatusBadGateway)
+            return
+        }
+        w.Header().Set("Content-Type", "application/json")
+        _ = json.NewEncoder(w).Encode(map[string]any{
+            "ok": true,
+            "anomaly_id": rep.ID,
+            "camera_id": rep.CameraID,
+            "company_id": targetCompanyID,
+            "tokens_count": len(tokens),
+        })
+    }))
 
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

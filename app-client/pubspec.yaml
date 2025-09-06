@@ -19,14 +19,8 @@ dependencies:
   # Secure storage & player
   flutter_secure_storage: ^9.2.2
 
-  # Media Kit (lengkap)
-  media_kit: ^1.1.10
-  media_kit_video: ^1.2.5
-  media_kit_libs_android_video: ^1.3.7
-  media_kit_libs_ios_video: ^1.1.4
-  media_kit_libs_macos_video: ^1.1.4
-  media_kit_libs_windows_video: ^1.0.11
-  media_kit_libs_linux: ^1.1.4
+  # Video playback (HLS) without external GitHub downloads
+  video_player: ^2.9.1
 
   firebase_core: ^2.32.0
   firebase_messaging: ^14.9.4

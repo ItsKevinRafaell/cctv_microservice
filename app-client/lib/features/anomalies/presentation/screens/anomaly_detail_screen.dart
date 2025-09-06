@@ -3,8 +3,7 @@ import 'package:anomeye/features/anomalies/presentation/widgets/anomaly_card.dar
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_video/media_kit_video.dart';
+import 'package:video_player/video_player.dart';
 
 class AnomalyDetailScreen extends ConsumerStatefulWidget {
   final String anomalyId;
@@ -15,7 +14,7 @@ class AnomalyDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _AnomalyDetailScreenState extends ConsumerState<AnomalyDetailScreen> {
-  Player? _player;
+  VideoPlayerController? _player;
   bool _clipTried = false;
 
   @override
@@ -35,9 +34,14 @@ class _AnomalyDetailScreenState extends ConsumerState<AnomalyDetailScreen> {
     }
     _clipTried = true;
     try {
-      _player ??= Player();
-      await _player!.open(Media(url), play: true);
-      setState(() {});
+      if (_player != null) {
+        await _player!.pause();
+        await _player!.dispose();
+      }
+      _player = VideoPlayerController.networkUrl(Uri.parse(url));
+      await _player!.initialize();
+      await _player!.play();
+      if (mounted) setState(() {});
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -59,7 +63,7 @@ class _AnomalyDetailScreenState extends ConsumerState<AnomalyDetailScreen> {
         data: (anomaly) {
           final clipUrl = anomaly.videoClipUrl;
           final relatedAnomaliesState = ref.watch(anomaliesListProvider(anomaly.cameraId));
-          final controller = _player != null ? VideoController(_player!) : null;
+          final has = _player != null && _player!.value.isInitialized;
 
           return CustomScrollView(
             slivers: [
@@ -83,8 +87,8 @@ class _AnomalyDetailScreenState extends ConsumerState<AnomalyDetailScreen> {
                           borderRadius: BorderRadius.circular(12),
                           child: DecoratedBox(
                             decoration: const BoxDecoration(color: Colors.black),
-                            child: controller != null
-                                ? Video(controller: controller)
+                            child: has
+                                ? VideoPlayer(_player!)
                                 : Center(
                                     child: IconButton(
                                       iconSize: 64,
