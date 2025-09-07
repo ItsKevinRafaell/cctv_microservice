@@ -1,6 +1,9 @@
 param(
   [string]$VideoDevice = '',
+  [ValidateSet('rtsp','rtmp')]
+  [string]$Protocol = 'rtsp',
   [string]$RtspUrl = 'rtsp://127.0.0.1:8554/cam3',
+  [string]$RtmpUrl = 'rtmp://127.0.0.1:1935/cam3',
   [int]$Fps = 25,                # set 0 to let device choose
   [string]$Size = '1280x720',    # set '' or 'auto' to let device choose
   [int]$OutWidth = 640,
@@ -99,19 +102,31 @@ try {
   # Quote the device for ffmpeg dshow input. In PowerShell, escape quotes with backticks.
   $dshowInput = "video=`"$VideoDevice`""
 
-  $args = $inArgs + @('-i', $dshowInput) + $vf + @(
+  # Encoding options
+  $gop = if ($Fps -gt 0) { [int]($Fps*2) } else { 50 }
+  $enc = @(
     '-c:v','libx264',
     '-preset','veryfast',
     '-tune','zerolatency',
     '-pix_fmt','yuv420p',
     '-profile:v','main',
-    '-g','50',
-    '-f','rtsp',
-    '-rtsp_transport','tcp',
-    $RtspUrl
+    '-g',"$gop",
+    '-x264-params',"scenecut=0:open_gop=0:keyint=$gop"
   )
+  if ($Fps -gt 0) { $enc += @('-r',"$Fps") }
 
-  Write-Host "[start] Streaming webcam to $RtspUrl (press Ctrl+C to stop)" -ForegroundColor Cyan
+  # Output (RTSP or RTMP)
+  if ($Protocol -eq 'rtmp') {
+    $out = @('-f','flv', $RtmpUrl)
+    $dstUrl = $RtmpUrl
+  } else {
+    $out = @('-f','rtsp','-rtsp_transport','tcp','-muxdelay','0','-muxpreload','0', $RtspUrl)
+    $dstUrl = $RtspUrl
+  }
+
+  $args = $inArgs + @('-i', $dshowInput) + $vf + $enc + $out
+
+  Write-Host "[start] Streaming webcam to $dstUrl (press Ctrl+C to stop)" -ForegroundColor Cyan
   Write-Host "        Device='$VideoDevice' FPS=$Fps Size=$Size OutWidth=$OutWidth"
   & $ffmpeg @args
 }
