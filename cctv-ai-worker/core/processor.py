@@ -1,8 +1,6 @@
 # core/processor.py
 import os
-os.environ.setdefault("KERAS_BACKEND", "tensorflow")
-
-import keras
+from core.models import load_model
 import cv2
 import numpy as np
 from collections import deque
@@ -10,6 +8,7 @@ from typing import Optional, List
 from services.reporting_service import ReportingService
 from datetime import datetime
 import json
+import torch
 
 def _env_bool(name: str, default: bool=False) -> bool:
     v = os.getenv(name, None)
@@ -54,19 +53,20 @@ class VideoProcessor:
     # Load model
     # -------------------------
     def _load_model(self) -> None:
-        print(f"[*] Memuat model dari {self.model_path}...")
-        print("PWD:", os.getcwd(), "Exists(mod.h5)?", os.path.exists(self.model_path))
+        print(f"[*] Memuat model PyTorch dari {self.model_path}...")
+        device = "cuda" if torch.cuda.is_available() else "cpu"
         try:
-            self.model = keras.saving.load_model(self.model_path, compile=False)
-            # Warmup shape
-            _ = self.model.predict(
-                np.zeros((1, self.sequence_length, self.image_height, self.image_width, 3), dtype=np.float32),
-                verbose=0
-            )
-            print("✅ Model berhasil dimuat.")
+            self.model = load_model(self.model_path, device=device)
+            self.device = device
+            # warmup
+            dummy = torch.zeros((1, self.sequence_length, self.image_height, self.image_width, 3), dtype=torch.float32).to(device)
+            with torch.no_grad():
+                _ = self.model(dummy)
+            print(f"✅ Model berhasil dimuat ke {device}.")
         except Exception as e:
             print(f"❌ Gagal memuat model: {e}")
             raise
+
 
     # -------------------------
     # Public API
@@ -226,7 +226,9 @@ class VideoProcessor:
             return None, (0.0, 0.0), {"sampled_indices": idxs, "note": "insufficient frames"}
 
         seq = np.expand_dims(np.array(frames, dtype=np.float32), axis=0)  # (1,50,64,64,3)
-        preds = self.model.predict(seq, verbose=0)  # (1,2)
+        with torch.no_grad():
+            tensor = torch.from_numpy(seq).float().to(self.device)
+            preds = self.model(tensor).cpu().numpy()
         if debug:
             print("DEBUG preds(uniform):", preds[0].tolist())
 
@@ -256,7 +258,9 @@ class VideoProcessor:
                 if len(dq) == T:
                     if k % max(1, stride) == 0:
                         seq = np.expand_dims(np.array(dq, dtype=np.float32), axis=0)
-                        preds = self.model.predict(seq, verbose=0)
+                        with torch.no_grad():
+                            tensor = torch.from_numpy(seq).float().to(self.device)
+                            preds = self.model(tensor).cpu().numpy()
                         pa = float(preds[0][anomaly_idx])
                         pn = float(preds[0][1 - anomaly_idx]) if preds.shape[1] > 1 else 1.0 - pa
                         scores.append((pa, pn))
