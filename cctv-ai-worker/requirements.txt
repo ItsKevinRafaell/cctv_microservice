@@ -1,8 +1,10 @@
 pika
 requests
-tensorflow-cpu==2.16.1
-keras==3.10.0
 opencv-python-headless
 # TF 2.16 biasa maunya NumPy < 2
 numpy<2
-h5py==3.10.0
+torch
+torchvision
+ultralytics
+opencv-python-headless
+typing_extensions>=4.9.0

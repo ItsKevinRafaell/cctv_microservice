@@ -212,7 +212,7 @@ services:
       - rtsp://mediamtx:8554/cam1
   # --- Mirror rekaman panjang ➜ MinIO setiap 30 detik ---
   archive_sync:
-    image: bitnami/minio-client:latest
+    image: minio/mc:latest
     restart: unless-stopped
     volumes:
       - recordings:/recordings
