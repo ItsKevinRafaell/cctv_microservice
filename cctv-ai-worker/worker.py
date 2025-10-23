@@ -1,18 +1,20 @@
 import os
+
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 print("CUDA_VISIBLE_DEVICES =", os.environ.get("CUDA_VISIBLE_DEVICES"))
 
 import json
 import sys
+
 from core.processor import VideoProcessor
 from services.mq_service import RabbitMQService
 from services.reporting_service import ReportingService
 
-RABBITMQ_HOST = 'rabbitmq'
-MAIN_BACKEND_HOST = 'api_main'
-QUEUE_NAME = 'video_analysis_tasks'
-MAIN_BACKEND_URL = f'http://{MAIN_BACKEND_HOST}:8080'
-MODEL_PATH = "mod.h5"
+RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "rabbitmq")
+MAIN_BACKEND_HOST = os.getenv("MAIN_BACKEND_HOST", "api_main")
+QUEUE_NAME = os.getenv("QUEUE_NAME", "video_analysis_tasks")
+MAIN_BACKEND_URL = os.getenv("MAIN_BACKEND_URL", f"http://{MAIN_BACKEND_HOST}:8080")
+MODEL_PATH = os.getenv("MODEL_PATH", "lstm_best.pth")
 
 def main():
     mq_service = RabbitMQService(host=RABBITMQ_HOST, queue_name=QUEUE_NAME)

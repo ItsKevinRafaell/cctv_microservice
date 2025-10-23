@@ -53,24 +53,27 @@ class FcmController extends StateNotifier<FcmState> {
     // Get the FCM token
     String? token;
     if (permissionGranted) {
-      token = await _service.getToken();
-      // Store token securely
-      if (token != null) {
-        await _store.save(token);
+      try {
+        token = await _service.getToken();
+      } catch (e) {
+        // gagal mendapatkan token (mis. emulator tanpa Play Services)
+        print('[FCM] getToken failed: $e');
       }
+      if (token != null && token.isNotEmpty) {
+        await _store.save(token);
 
-      // Listen for token refreshes
-      _sub?.cancel();
-      _sub = _service.onTokenRefresh().listen((newToken) async {
-        await _store.save(newToken);
-        state = state.copyWith(token: newToken);
-        // Update token on backend if user is logged in
-        try {
-          await _authRepo.upsertFcmToken(newToken);
-        } catch (_) {
-          // ignore when not authenticated yet
-        }
-      });
+        // Listen for token refreshes
+        _sub?.cancel();
+        _sub = _service.onTokenRefresh().listen((newToken) async {
+          try {
+            await _store.save(newToken);
+            state = state.copyWith(token: newToken);
+            await _authRepo.upsertFcmToken(newToken);
+          } catch (e) {
+            print('[FCM] onTokenRefresh error: $e');
+          }
+        });
+      }
     } else {
       // Clear token if permissions are revoked
       await _store.clear();
@@ -103,6 +106,8 @@ class FcmController extends StateNotifier<FcmState> {
       } catch (_) {
         // ignore errors (e.g., 401) if authentication not ready
       }
+    } else {
+      print('[FCM] register skipped: token unavailable (cek Google Play Services / koneksi)');
     }
   }
 

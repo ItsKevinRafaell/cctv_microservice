@@ -20,9 +20,11 @@ This folder lets you turn your PC webcam into a camera for the stack (live HLS v
 **Live Streaming (Webcam → MediaMTX)**
 - RTMP (recommended on Windows):
   - `powershell -ExecutionPolicy Bypass -File cctv-camera/start_cam3_stream.ps1 -VideoDevice "Integrated Camera" -Fps 30 -Size "640x480" -NoScale -Protocol rtmp`
-- RTSP (alternative):
-  - `powershell -ExecutionPolicy Bypass -File cctv-camera/start_cam3_stream.ps1 -VideoDevice "Integrated Camera" -Fps 30 -Size "640x480" -NoScale`
-- One-command bring-up + stream (auto-stops dummy publisher, ensures MediaMTX):
+- RTSP (alternative / works for remote host as well):
+  - Lokal: `powershell -ExecutionPolicy Bypass -File cctv-camera/start_cam3_stream.ps1 -VideoDevice "Integrated Camera" -Fps 30 -Size "640x480" -NoScale`
+  - Remote (ke host lain): `powershell -ExecutionPolicy Bypass -File cctv-camera/start_cam3_stream.ps1 -VideoDevice "Integrated Camera" -RtspUrl "rtsp://<HOST_DOCKER>:8554/cam3"`  
+    (Script mendeteksi host bukan lokal dan otomatis melewati `docker compose up`; bisa pakai `-SkipDocker` untuk memaksa skip.)
+- One-command bring-up + stream (auto-stops dummy publisher, ensures MediaMTX; gunakan hanya di mesin yang menjalankan docker-compose):
   - `powershell -ExecutionPolicy Bypass -File scripts/run_with_webcam.ps1 [-VideoDevice "Integrated Camera"]`
 
 **View Stream**

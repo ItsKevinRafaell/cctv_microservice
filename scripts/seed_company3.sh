@@ -22,6 +22,15 @@ CLIP_PATH="${CLIP_PATH:-/video-clips/cam3/clip_001.mp4}"
 WORKER_SHARED_TOKEN="${WORKER_SHARED_TOKEN:-}"
 # Optional: provide an app FCM token to register on backend
 FCM_TOKEN="${FCM_TOKEN:-}"
+# Optional: override RTSP URL for the primary camera
+CAMERA_RTSP_URL="${CAMERA_RTSP_URL:-rtsp://mediamtx:8554/${STREAM_KEY}}"
+# Optional: auto-provision an extra remote camera (for sharing to teman)
+FRIEND_STREAM_KEY="${FRIEND_STREAM_KEY:-}"
+FRIEND_CAMERA_NAME="${FRIEND_CAMERA_NAME:-Laptop Teman 1}"
+FRIEND_CAMERA_ID="${FRIEND_CAMERA_ID:-}"
+FRIEND_RTSP_URL="${FRIEND_RTSP_URL:-}"
+# Optional: override docker compose command
+DOCKER_COMPOSE_CMD="${DOCKER_COMPOSE_CMD:-docker compose}"
 
 echo "[seed] API_BASE=$API_BASE COMPANY_ID=$COMPANY_ID STREAM_KEY=$STREAM_KEY"
 
@@ -110,7 +119,8 @@ fi
 
 # 4) Create camera in company
 echo "[seed] Create camera stream_key=$STREAM_KEY for company=$COMPANY_ID..."
-create_cam_body=$(printf '{"name":"%s","location":"%s","stream_key":"%s","company_id":%s}' "Demo Cam $STREAM_KEY" "Demo" "$STREAM_KEY" "$COMPANY_ID")
+create_cam_body=$(printf '{"name":"%s","location":"%s","stream_key":"%s","rtsp_url":"%s","company_id":%s}' \
+  "Demo Cam $STREAM_KEY" "Demo" "$STREAM_KEY" "$CAMERA_RTSP_URL" "$COMPANY_ID")
 curl_json POST "$API_BASE/api/cameras" "$create_cam_body" "$AUTH_H"
 CAM_ID=$(extract_json_number camera_id "$body")
 if [[ -z "$CAM_ID" ]]; then
@@ -125,6 +135,44 @@ if [[ -z "$CAM_ID" ]]; then
 fi
 [[ -z "$CAM_ID" ]] && { echo "[seed] Failed to obtain camera id"; exit 1; }
 echo "[seed] Camera id=$CAM_ID"
+
+# 4b) Optional extra camera for remote laptop
+FRIEND_CAM_ID=""
+if [[ -n "$FRIEND_STREAM_KEY" ]]; then
+  echo "[seed] Provision remote camera stream_key=$FRIEND_STREAM_KEY..."
+  friend_name="$FRIEND_CAMERA_NAME"
+  friend_rtsp="${FRIEND_RTSP_URL:-rtsp://mediamtx:8554/${FRIEND_STREAM_KEY}}"
+  if [[ -n "$FRIEND_CAMERA_ID" ]]; then
+    echo "[seed] Using FRIEND_CAMERA_ID=$FRIEND_CAMERA_ID (psql upsert)"
+    SQL=$(cat <<EOF
+INSERT INTO cameras (id, company_id, name, stream_key, rtsp_url, created_at, updated_at)
+VALUES (${FRIEND_CAMERA_ID}, ${COMPANY_ID}, '${friend_name//\'/\'\'}', '${FRIEND_STREAM_KEY//\'/\'\'}', '${friend_rtsp//\'/\'\'}', NOW(), NOW())
+ON CONFLICT (id) DO UPDATE
+  SET company_id = EXCLUDED.company_id,
+      name       = EXCLUDED.name,
+      stream_key = EXCLUDED.stream_key,
+      rtsp_url   = EXCLUDED.rtsp_url,
+      updated_at = NOW();
+EOF
+)
+    ${DOCKER_COMPOSE_CMD} exec -T db psql -U admin -d cctv_db -v "ON_ERROR_STOP=1" -c "${SQL}"
+    FRIEND_CAM_ID="$FRIEND_CAMERA_ID"
+  else
+    create_friend_body=$(printf '{"name":"%s","location":"Remote","stream_key":"%s","rtsp_url":"%s","company_id":%s}' \
+      "$friend_name" "$FRIEND_STREAM_KEY" "$friend_rtsp" "$COMPANY_ID")
+    curl_json POST "$API_BASE/api/cameras" "$create_friend_body" "$AUTH_H"
+    FRIEND_CAM_ID=$(extract_json_number camera_id "$body")
+    if [[ -z "$FRIEND_CAM_ID" ]]; then
+      curl_json GET "$API_BASE/api/cameras?company_id=$COMPANY_ID" "" "$AUTH_H"
+      FRIEND_CAM_ID=$(sed -n "s/.*\"stream_key\"[[:space:]]*:[[:space:]]*\"${FRIEND_STREAM_KEY}\"[^}]*\"id\"[[:space:]]*:[[:space:]]*\([0-9]\+\).*/\1/p" <<<"$body")
+    fi
+  fi
+  if [[ -n "$FRIEND_CAM_ID" ]]; then
+    echo "[seed] Remote camera id=$FRIEND_CAM_ID (stream_key=$FRIEND_STREAM_KEY, rtsp_url=$friend_rtsp)"
+  else
+    echo "[seed] WARN: failed to obtain remote camera id for $FRIEND_STREAM_KEY" >&2
+  fi
+fi
 
 # 5) Report anomaly (with clip if CLIP_PATH set)
 echo "[seed] Report anomaly for camera_id=$CAM_ID ..."
@@ -154,3 +202,6 @@ echo "  2) Home → Recent Alerts should show the anomaly; open detail to play c
 echo "  3) To start a dummy live stream to $STREAM_KEY:"
 echo "     docker compose exec -d ffmpeg_rtsp_cam1 sh -lc 'ffmpeg -re -f lavfi -i testsrc=size=640x360:rate=25 -f lavfi -i sine=frequency=1000:sample_rate=48000 -c:v libx264 -preset veryfast -tune zerolatency -pix_fmt yuv420p -profile:v main -g 50 -c:a aac -b:a 128k -f rtsp -rtsp_transport tcp rtsp://mediamtx:8554/$STREAM_KEY'"
 echo "  4) Watch push logs: docker compose logs -f push-service"
+if [[ -n "$FRIEND_CAM_ID" ]]; then
+echo "  5) Remote camera ready: stream_key=$FRIEND_STREAM_KEY (camera_id=$FRIEND_CAM_ID). Share cctv-camera-2 folder ke laptop teman."
+fi

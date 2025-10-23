@@ -17,14 +17,14 @@ services:
       - SUPERADMIN_EMAIL=superadmin@example.com
       - SUPERADMIN_PASSWORD=ChangeMe123!
       # URL publik untuk Mediamtx (untuk dibagikan ke App)
-      - MEDIAMTX_PUBLIC_HOST=100.100.229.113
+      - MEDIAMTX_PUBLIC_HOST=10.68.111.149
       - MEDIAMTX_PUBLIC_HLS_PORT=8888
       - MEDIAMTX_PUBLIC_RTSP_PORT=8554
       - MEDIAMTX_PUBLIC_WEBRTC_WS_PORT=8889
       # ---- S3/MinIO untuk presign rekaman panjang ----
       - MINIO_INTERNAL_ENDPOINT=http://minio:9000
-      - MINIO_PUBLIC_ENDPOINT=http://10.0.2.2:9000
-      - MINIO_PUBLIC_BASE_URL=http://10.0.2.2:9000
+      - MINIO_PUBLIC_ENDPOINT=http://10.68.111.149:9000
+      - MINIO_PUBLIC_BASE_URL=http://10.68.111.149:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minio-secret-key
       - MINIO_USE_PRESIGN=true
@@ -49,8 +49,8 @@ services:
       # endpoint internal = service name di compose
       - MINIO_INTERNAL_ENDPOINT=http://minio:9000
       # endpoint publik buat dibagikan ke UI (ubah ke domain/IP kamu kalau perlu)
-      - MINIO_PUBLIC_ENDPOINT=http://127.0.0.1:9000
-      - MINIO_PUBLIC_BASE_URL=http://127.0.0.1:9000
+      - MINIO_PUBLIC_ENDPOINT=http://10.68.111.149:9000
+      - MINIO_PUBLIC_BASE_URL=http://10.68.111.149:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minio-secret-key
       - MINIO_BUCKET=video-clips
@@ -73,9 +73,9 @@ services:
     environment:
       - CUDA_VISIBLE_DEVICES=-1
       - KERAS_BACKEND=tensorflow
-      - INFER_MODE=uniform            # <— samakan dengan training
-      - ANOMALY_CLASS_INDEX=0       # anomaly di index 0 (training)
-      - ANOMALY_THRESHOLD=0.65
+      - INFER_MODE=uniform
+      - ANOMALY_CLASS_INDEX=1         # probs layout: [normal, anomaly]
+      - ANOMALY_THRESHOLD=0.60
       - ANOMALY_MIN_GAP=0
       - CONVERT_BGR2RGB=false         # training pakai BGR dari OpenCV
       - DEBUG_PRED=true
@@ -174,6 +174,35 @@ services:
 
 
 
+
+  archiver_cam3:
+    image: jrottenberg/ffmpeg:5.1-alpine
+    restart: unless-stopped
+    volumes:
+      - recordings:/recordings
+    networks: [cctv_network]
+    depends_on:
+      - mediamtx
+    command:
+      - -hide_banner
+      - -loglevel
+      - info
+      - -rtsp_transport
+      - tcp
+      - -i
+      - rtsp://mediamtx:8554/cam3
+      - -c
+      - copy
+      - -f
+      - segment
+      - -segment_time
+      - "3600"
+      - -reset_timestamps
+      - "1"
+      - -strftime
+      - "1"
+      - /recordings/cam3_%Y%m%d_%H%M%S.mp4
+
   test_publisher_cam1:
     image: jrottenberg/ffmpeg:5.1-alpine
     restart: unless-stopped
@@ -221,12 +250,17 @@ services:
       MINIO_URL: http://minio:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minio-secret-key
-    command: >
-      /bin/bash -lc "
-        /opt/bitnami/minio-client/bin/mc alias set $${MINIO_ALIAS} $${MINIO_URL} $${MINIO_ACCESS_KEY} $${MINIO_SECRET_KEY} &&
-        /opt/bitnami/minio-client/bin/mc mb -p $${MINIO_ALIAS}/video-archive || true &&
-        /opt/bitnami/minio-client/bin/mc mirror --overwrite --remove --watch /recordings $${MINIO_ALIAS}/video-archive
-      "
+    entrypoint: []
+    command:
+      - /bin/sh
+      - -euc
+      - |
+        while ! mc alias set "$${MINIO_ALIAS}" "$${MINIO_URL}" "$${MINIO_ACCESS_KEY}" "$${MINIO_SECRET_KEY}"; do
+          echo "MinIO belum siap, retry dalam 3 detik..."
+          sleep 3
+        done
+        mc mb -p "$${MINIO_ALIAS}/video-archive" || true
+        exec mc mirror --overwrite --remove --watch /recordings "$${MINIO_ALIAS}/video-archive"
     depends_on:
       - minio
     networks:
@@ -276,7 +310,7 @@ services:
     environment:
       - API_BASE_URL=http://api_main:8080
       - UPLOAD_BASE_URL=http://api_ingestion:8081
-      - NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8080
+      - NEXT_PUBLIC_API_BASE_URL=http://10.68.111.149:8080
 
   archiver_manager:
     image: jrottenberg/ffmpeg:5.1-alpine

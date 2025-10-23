@@ -13,7 +13,7 @@ class RabbitMQService:
             try:
                 print(f"SERVICE Mencoba terhubung ke RabbitMQ (percobaan {i+1}/{max_retries})...")
                 self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host))
-                print("✅ Berhasil terhubung ke RabbitMQ!")
+                print("[OK] Berhasil terhubung ke RabbitMQ!")
                 break
             except pika.exceptions.AMQPConnectionError as e:
                 print(f" SERVICE koneksi gagal: {e}. Mencoba lagi dalam {retry_delay} detik...")

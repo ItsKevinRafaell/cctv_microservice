@@ -7,7 +7,8 @@ param(
   [int]$Fps = 25,                # set 0 to let device choose
   [string]$Size = '1280x720',    # set '' or 'auto' to let device choose
   [int]$OutWidth = 640,
-  [switch]$NoScale
+  [switch]$NoScale,
+  [switch]$SkipDocker
 )
 
 Set-StrictMode -Version Latest
@@ -71,13 +72,30 @@ function Get-DefaultVideoDevice([string]$ffmpegPath) {
 }
 
 try {
-  Ensure-Mediamtx
-  # Stop dummy test publisher if running to avoid path conflicts on 'cam3'
-  try {
-    $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
-    $compose = Get-ComposeInfo
-    & $compose.Exe @($compose.BaseArgs + @('-f', (Join-Path $repoRoot 'docker-compose.yml'), 'stop', 'test_publisher_cam3')) | Out-Null
-  } catch {}
+  $targetHost = $null
+  if ([Uri]::TryCreate(($Protocol -eq 'rtmp') ? $RtmpUrl : $RtspUrl, [System.UriKind]::Absolute, [ref]$targetHost)) {
+    $targetHost = $targetHost.Host
+  } else {
+    $targetHost = ''
+  }
+
+  $manageDocker = -not $SkipDocker.IsPresent -and (
+      [string]::IsNullOrWhiteSpace($targetHost) -or
+      $targetHost -eq 'localhost' -or
+      $targetHost -eq '127.0.0.1'
+    )
+
+  if ($manageDocker) {
+    Ensure-Mediamtx
+    # Stop dummy test publisher if running to avoid path conflicts on 'cam3'
+    try {
+      $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
+      $compose = Get-ComposeInfo
+      & $compose.Exe @($compose.BaseArgs + @('-f', (Join-Path $repoRoot 'docker-compose.yml'), 'stop', 'test_publisher_cam3')) | Out-Null
+    } catch {}
+  } else {
+    Write-Host "[info] SkipDocker aktif atau target host bukan lokal ('$targetHost'); melewati orchestration Docker." -ForegroundColor Yellow
+  }
   $ffmpeg = Get-FFmpegPath
   Write-Host "[ok] Using ffmpeg: $ffmpeg" -ForegroundColor Green
 

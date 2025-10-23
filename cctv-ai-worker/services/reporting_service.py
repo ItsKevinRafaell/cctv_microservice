@@ -20,7 +20,7 @@ class ReportingService:
                 headers["X-Worker-Token"] = self._secret
             r = requests.post(self.url, json=payload, timeout=10, headers=headers)
             if r.status_code == 200:
-                print(" [✔] Laporan berhasil dikirim.")
+                print(" [OK] Laporan berhasil dikirim.")
             else:
                 print(f" [!] Gagal kirim laporan. Status: {r.status_code}, Pesan: {r.text}")
         except requests.exceptions.RequestException as e:
