@@ -3,3 +3,39 @@ token.txt
 admin-dashboard/node_modules/
 admin-dashboard/.next/
 admin-dashboard/.vercel/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Flutter / Dart build outputs
+app-client/.dart_tool/
+app-client/build/
+app-client/.flutter-plugins
+app-client/.flutter-plugins-dependencies
+app-client/.packages
+app-client/.idea/
+
+# Gradle / Android
+app-client/android/.gradle/
+app-client/android/app/build/
+app-client/android/local.properties
+
+# iOS / macOS build outputs
+app-client/ios/Pods/
+app-client/ios/.symlinks/
+app-client/ios/build/
+app-client/macos/Flutter/ephemeral/
+
+# General build artifacts
+**/dist/
+**/build/
+*.log
+*.tmp
+*.rar
+*.zip
+*.tar
+*.tar.gz
+*.exe
