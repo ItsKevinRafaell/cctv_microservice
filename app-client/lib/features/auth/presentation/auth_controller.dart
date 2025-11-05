@@ -68,6 +68,43 @@ class AuthController extends StateNotifier<AuthState> {
     await _ref.read(fcmControllerProvider.notifier).clear();
   }
 
-  // FIX 3: Hapus method _attachFcmIfAny karena logikanya sudah dipindahkan
-  // ke dalam FcmController yang lebih modern.
+  Future<void> refreshProfile() async {
+    final current = state;
+    current.whenOrNull(
+      authenticated: (token, user) async {
+        final profile = await _repo.fetchProfile();
+        state = AuthState.authenticated(token: token, user: profile);
+      },
+    );
+  }
+
+  Future<void> updateProfile({
+    String? name,
+    String? jobTitle,
+    String? phone,
+    String? avatarUrl,
+  }) async {
+    final current = state;
+    await current.whenOrNull(
+      authenticated: (token, user) async {
+        final updated = await _repo.updateProfile(
+          name: name,
+          jobTitle: jobTitle,
+          phone: phone,
+          avatarUrl: avatarUrl,
+        );
+        state = AuthState.authenticated(token: token, user: updated);
+      },
+    );
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await _repo.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+  }
 }

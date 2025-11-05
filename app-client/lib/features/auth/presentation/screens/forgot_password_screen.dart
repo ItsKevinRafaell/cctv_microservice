@@ -45,10 +45,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     return AuthScaffold(
       title: 'Forgot Password',
       subtitle: 'Input your email to reset your password',
-      activeTab: 0,
-      onTapSignIn: () => context.go('/sign-in'),
-      onTapSignUp: () => context.go('/sign-up'),
-      showTabs: false, // HIDE tabs for this page
       child: Form(
         key: _formKey,
         child: Column(
@@ -104,7 +100,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  'Already have an account.',
+                  'Remembered your password? ',
                   style: TextStyle(fontSize: 12.5, color: Colors.black54),
                 ),
                 InkWell(

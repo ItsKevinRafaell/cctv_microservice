@@ -5,6 +5,7 @@ import (
     "context"
     "database/sql"
     "errors"
+    "strings"
 
     pqx "github.com/lib/pq"
 )
@@ -32,13 +33,18 @@ func NewRepository(db *sql.DB) Repository {
 }
 
 func (r *repository) GetUserByEmail(email string) (*domain.User, error) {
+    email = strings.ToLower(strings.TrimSpace(email))
 	var user domain.User
 	query := `SELECT id, email, password_hash, company_id, role FROM users WHERE email=$1`
 
-	err := r.db.QueryRow(query, email).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.CompanyID, &user.Role)
+    var company sql.NullInt64
+	err := r.db.QueryRow(query, email).Scan(&user.ID, &user.Email, &user.PasswordHash, &company, &user.Role)
 	if err != nil {
 		return nil, err
 	}
+    if company.Valid {
+        user.CompanyID = company.Int64
+    }
 
 	return &user, nil
 }

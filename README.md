@@ -24,8 +24,11 @@ Quick Start
   - Send clips to AI (from stream, no second webcam handle):
     `python cctv-camera/send_webcam_clips.py --camera-id <ID> --source rtmp://127.0.0.1:1935/cam3 --seconds 8 --no-preview --ffmpeg-capture --force-anomaly`
   - More options: see `cctv-camera/README.md`.
-- Run the app (Android emulator)
-  - `flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080 --dart-define=HLS_BASE_URL=http://10.0.2.2:8888`
+- Run the app
+  - Physical device (sama Wi-Fi/LAN):<br/>
+    `flutter run --dart-define=API_BASE_URL=http://10.68.107.73:8080 --dart-define=HLS_BASE_URL=http://10.68.107.73:8888`
+  - Android emulator (host lokal):<br/>
+    `flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080 --dart-define=HLS_BASE_URL=http://10.0.2.2:8888`
   - Login: `company3admin@example.com / Passw0rd123!`
 
 What works
@@ -45,6 +48,7 @@ Notes
    - Verify: `docker compose ps` → `api_main` should be Up on `0.0.0.0:8080`
 
 2) Run The App (set API/HLS base URLs)
+   - Physical device: `flutter run --dart-define=API_BASE_URL=http://10.68.107.73:8080 --dart-define=HLS_BASE_URL=http://10.68.107.73:8888`
    - Android emulator: `flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080 --dart-define=HLS_BASE_URL=http://10.0.2.2:8888`
    - Desktop/Web on same host: `API_BASE_URL=http://127.0.0.1:8080` and `HLS_BASE_URL=http://127.0.0.1:8888`
 

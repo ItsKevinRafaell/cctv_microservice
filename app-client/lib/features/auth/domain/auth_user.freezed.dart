@@ -25,6 +25,10 @@ mixin _$AuthUser {
   int get companyId => throw _privateConstructorUsedError;
   String get role => throw _privateConstructorUsedError;
   String? get fcmToken => throw _privateConstructorUsedError;
+  String? get name => throw _privateConstructorUsedError;
+  String? get jobTitle => throw _privateConstructorUsedError;
+  String? get phone => throw _privateConstructorUsedError;
+  String? get avatarUrl => throw _privateConstructorUsedError;
 
   /// Serializes this AuthUser to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -42,7 +46,15 @@ abstract class $AuthUserCopyWith<$Res> {
       _$AuthUserCopyWithImpl<$Res, AuthUser>;
   @useResult
   $Res call(
-      {int id, String email, int companyId, String role, String? fcmToken});
+      {int id,
+      String email,
+      int companyId,
+      String role,
+      String? fcmToken,
+      String? name,
+      String? jobTitle,
+      String? phone,
+      String? avatarUrl});
 }
 
 /// @nodoc
@@ -65,6 +77,10 @@ class _$AuthUserCopyWithImpl<$Res, $Val extends AuthUser>
     Object? companyId = null,
     Object? role = null,
     Object? fcmToken = freezed,
+    Object? name = freezed,
+    Object? jobTitle = freezed,
+    Object? phone = freezed,
+    Object? avatarUrl = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -87,6 +103,22 @@ class _$AuthUserCopyWithImpl<$Res, $Val extends AuthUser>
           ? _value.fcmToken
           : fcmToken // ignore: cast_nullable_to_non_nullable
               as String?,
+      name: freezed == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String?,
+      jobTitle: freezed == jobTitle
+          ? _value.jobTitle
+          : jobTitle // ignore: cast_nullable_to_non_nullable
+              as String?,
+      phone: freezed == phone
+          ? _value.phone
+          : phone // ignore: cast_nullable_to_non_nullable
+              as String?,
+      avatarUrl: freezed == avatarUrl
+          ? _value.avatarUrl
+          : avatarUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -100,7 +132,15 @@ abstract class _$$AuthUserImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {int id, String email, int companyId, String role, String? fcmToken});
+      {int id,
+      String email,
+      int companyId,
+      String role,
+      String? fcmToken,
+      String? name,
+      String? jobTitle,
+      String? phone,
+      String? avatarUrl});
 }
 
 /// @nodoc
@@ -121,6 +161,10 @@ class __$$AuthUserImplCopyWithImpl<$Res>
     Object? companyId = null,
     Object? role = null,
     Object? fcmToken = freezed,
+    Object? name = freezed,
+    Object? jobTitle = freezed,
+    Object? phone = freezed,
+    Object? avatarUrl = freezed,
   }) {
     return _then(_$AuthUserImpl(
       id: null == id
@@ -143,6 +187,22 @@ class __$$AuthUserImplCopyWithImpl<$Res>
           ? _value.fcmToken
           : fcmToken // ignore: cast_nullable_to_non_nullable
               as String?,
+      name: freezed == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String?,
+      jobTitle: freezed == jobTitle
+          ? _value.jobTitle
+          : jobTitle // ignore: cast_nullable_to_non_nullable
+              as String?,
+      phone: freezed == phone
+          ? _value.phone
+          : phone // ignore: cast_nullable_to_non_nullable
+              as String?,
+      avatarUrl: freezed == avatarUrl
+          ? _value.avatarUrl
+          : avatarUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -155,7 +215,11 @@ class _$AuthUserImpl implements _AuthUser {
       required this.email,
       required this.companyId,
       required this.role,
-      this.fcmToken});
+      this.fcmToken,
+      this.name,
+      this.jobTitle,
+      this.phone,
+      this.avatarUrl});
 
   factory _$AuthUserImpl.fromJson(Map<String, dynamic> json) =>
       _$$AuthUserImplFromJson(json);
@@ -170,10 +234,18 @@ class _$AuthUserImpl implements _AuthUser {
   final String role;
   @override
   final String? fcmToken;
+  @override
+  final String? name;
+  @override
+  final String? jobTitle;
+  @override
+  final String? phone;
+  @override
+  final String? avatarUrl;
 
   @override
   String toString() {
-    return 'AuthUser(id: $id, email: $email, companyId: $companyId, role: $role, fcmToken: $fcmToken)';
+    return 'AuthUser(id: $id, email: $email, companyId: $companyId, role: $role, fcmToken: $fcmToken, name: $name, jobTitle: $jobTitle, phone: $phone, avatarUrl: $avatarUrl)';
   }
 
   @override
@@ -187,13 +259,19 @@ class _$AuthUserImpl implements _AuthUser {
                 other.companyId == companyId) &&
             (identical(other.role, role) || other.role == role) &&
             (identical(other.fcmToken, fcmToken) ||
-                other.fcmToken == fcmToken));
+                other.fcmToken == fcmToken) &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.jobTitle, jobTitle) ||
+                other.jobTitle == jobTitle) &&
+            (identical(other.phone, phone) || other.phone == phone) &&
+            (identical(other.avatarUrl, avatarUrl) ||
+                other.avatarUrl == avatarUrl));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, email, companyId, role, fcmToken);
+  int get hashCode => Object.hash(runtimeType, id, email, companyId, role,
+      fcmToken, name, jobTitle, phone, avatarUrl);
 
   /// Create a copy of AuthUser
   /// with the given fields replaced by the non-null parameter values.
@@ -217,7 +295,11 @@ abstract class _AuthUser implements AuthUser {
       required final String email,
       required final int companyId,
       required final String role,
-      final String? fcmToken}) = _$AuthUserImpl;
+      final String? fcmToken,
+      final String? name,
+      final String? jobTitle,
+      final String? phone,
+      final String? avatarUrl}) = _$AuthUserImpl;
 
   factory _AuthUser.fromJson(Map<String, dynamic> json) =
       _$AuthUserImpl.fromJson;
@@ -232,6 +314,14 @@ abstract class _AuthUser implements AuthUser {
   String get role;
   @override
   String? get fcmToken;
+  @override
+  String? get name;
+  @override
+  String? get jobTitle;
+  @override
+  String? get phone;
+  @override
+  String? get avatarUrl;
 
   /// Create a copy of AuthUser
   /// with the given fields replaced by the non-null parameter values.

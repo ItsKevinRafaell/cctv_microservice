@@ -1,4 +1,5 @@
 import 'package:anomeye/features/auth/domain/auth_state.dart';
+import 'package:anomeye/features/auth/domain/auth_user.dart';
 
 abstract class AuthRepo {
   Future<AuthState> readToken();
@@ -10,7 +11,18 @@ abstract class AuthRepo {
   });
   Future<void> signOut();
 
-  // NEW
-  Future<void> upsertFcmToken(String token); // simpan/update token ke backend
-  Future<void> deleteFcmToken(); // opsional: hapus saat logout
+  Future<void> upsertFcmToken(String token);
+  Future<void> deleteFcmToken();
+
+  Future<AuthUser> fetchProfile();
+  Future<AuthUser> updateProfile({
+    String? name,
+    String? jobTitle,
+    String? phone,
+    String? avatarUrl,
+  });
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
 }

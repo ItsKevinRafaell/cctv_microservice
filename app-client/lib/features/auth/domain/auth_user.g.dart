@@ -13,6 +13,10 @@ _$AuthUserImpl _$$AuthUserImplFromJson(Map<String, dynamic> json) =>
       companyId: (json['companyId'] as num).toInt(),
       role: json['role'] as String,
       fcmToken: json['fcmToken'] as String?,
+      name: json['name'] as String?,
+      jobTitle: json['jobTitle'] as String?,
+      phone: json['phone'] as String?,
+      avatarUrl: json['avatarUrl'] as String?,
     );
 
 Map<String, dynamic> _$$AuthUserImplToJson(_$AuthUserImpl instance) =>
@@ -22,4 +26,8 @@ Map<String, dynamic> _$$AuthUserImplToJson(_$AuthUserImpl instance) =>
       'companyId': instance.companyId,
       'role': instance.role,
       'fcmToken': instance.fcmToken,
+      'name': instance.name,
+      'jobTitle': instance.jobTitle,
+      'phone': instance.phone,
+      'avatarUrl': instance.avatarUrl,
     };

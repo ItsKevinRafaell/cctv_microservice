@@ -1,4 +1,5 @@
 import 'package:anomeye/app/di.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -28,19 +29,40 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
-    await Future.delayed(const Duration(milliseconds: 600));
-    final ctrl = ref.read(authStateProvider.notifier);
-    await ctrl.signIn(_email.text, _password.text);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final ctrl = ref.read(authStateProvider.notifier);
+      await ctrl.signIn(_email.text.trim(), _password.text);
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      var message = 'Tidak dapat masuk. Periksa kembali kredensial Anda.';
+      if (data is Map<String, dynamic>) {
+        final serverMessage = data['message'] ?? data['error'];
+        if (serverMessage is String && serverMessage.isNotEmpty) {
+          message = serverMessage;
+        }
+      }
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text(message)));
+    } catch (_) {
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(const SnackBar(
+            content: Text('Terjadi kesalahan tak terduga. Coba lagi.')));
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return AuthScaffold(
-      title: 'Welcome Back!',
-      subtitle: 'Please Sign In with your account',
-      activeTab: 0,
-      onTapSignIn: () {},
-      onTapSignUp: () => context.go('/sign-up'),
+      title: 'Sign in to AnomEye',
+      subtitle:
+          'Enterprise-grade monitoring, analytics, and alerts in one secure console.',
       child: Form(
         key: _formKey,
         child: Column(
@@ -71,11 +93,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () => context.go('/forgot-password'),
-                style:
-                    TextButton.styleFrom(foregroundColor: AuthTheme.borderBlue),
-                child: const Text('Forgot Password?',
-                    style:
-                        TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.primary,
+                  textStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                child: const Text('Forgot password?'),
               ),
             ),
             const SizedBox(height: 8),
@@ -91,27 +116,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2))
                     : const Text('Sign In'),
               ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text("Don't have account yet? ",
-                    style: TextStyle(fontSize: 12.5, color: Colors.black54)),
-                InkWell(
-                  onTap: () => context.go('/sign-up'),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 0.0),
-                    child: Text('Sign Up',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                          color: AuthTheme.primaryBlue,
-                          decoration: TextDecoration.underline,
-                        )),
-                  ),
-                ),
-              ],
             ),
           ],
         ),

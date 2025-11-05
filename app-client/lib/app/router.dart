@@ -3,8 +3,9 @@ import 'package:anomeye/features/anomalies/presentation/screens/anomaly_detail_s
 import 'package:anomeye/features/anomalies/presentation/screens/anomaly_history_screen.dart';
 import 'package:anomeye/features/auth/presentation/screens/account_screen.dart';
 import 'package:anomeye/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:anomeye/features/auth/presentation/screens/edit_profile_screen.dart';
+import 'package:anomeye/features/auth/presentation/screens/change_password_screen.dart';
 import 'package:anomeye/features/auth/presentation/screens/sign_in_screen.dart';
-import 'package:anomeye/features/auth/presentation/screens/sign_up_screen.dart';
 import 'package:anomeye/features/cameras/presentation/screens/camera_detail_screen.dart';
 import 'package:anomeye/features/cameras/presentation/screens/home_dashboard_screen.dart';
 import 'package:anomeye/features/cameras/presentation/screens/cameras_list_screen.dart';
@@ -14,7 +15,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:anomeye/features/recordings/domain/recording.dart';
 import 'package:anomeye/features/recordings/presentation/recordings_screen.dart';
+import 'package:anomeye/features/recordings/presentation/recording_player_screen.dart';
 
 CustomTransitionPage<T> _slidePage<T>({
   required GoRouterState state,
@@ -65,10 +68,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           path: '/forgot-password',
           builder: (_, __) => const ForgotPasswordScreen()),
       GoRoute(
-          path: '/sign-up',
-          name: 'sign-up',
-          pageBuilder: (_, s) => const NoTransitionPage(child: SignUpScreen())),
-      GoRoute(
           path: '/history',
           name: 'history',
           pageBuilder: (_, s) =>
@@ -83,10 +82,31 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           pageBuilder: (_, s) =>
               const NoTransitionPage(child: AccountScreen())),
       GoRoute(
+          path: '/account/edit',
+          name: 'account-edit',
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: EditProfileScreen())),
+      GoRoute(
+          path: '/account/change-password',
+          name: 'account-change-password',
+          pageBuilder: (_, s) =>
+              const NoTransitionPage(child: ChangePasswordScreen())),
+      GoRoute(
         path: '/cameras/:id/recordings',
         name: 'recordings',
         builder: (context, state) =>
             RecordingsScreen(cameraId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/recordings/play',
+        name: 'recording-play',
+        builder: (context, state) {
+          final extra = state.extra;
+          if (extra is Recording) {
+            return RecordingPlayerScreen(recording: extra);
+          }
+          return const _MissingRecordingScreen();
+        },
       ),
       GoRoute(
         path: '/live/:id',
@@ -108,7 +128,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
     redirect: (context, state) {
       final path = state.uri.path;
-      final loggingIn = path == '/sign-in' || path == '/sign-up';
+      final publicRoutes = {'/sign-in', '/forgot-password'};
+      final loggingIn = publicRoutes.contains(path);
 
       final authed = auth.maybeWhen(
         authenticated: (_, __) => true,
@@ -121,3 +142,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     },
   );
 });
+
+class _MissingRecordingScreen extends StatelessWidget {
+  const _MissingRecordingScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: Text('Recording data unavailable.'),
+      ),
+    );
+  }
+}

@@ -2,6 +2,7 @@ import 'package:anomeye/app/di.dart';
 import 'package:anomeye/shared/widgets/app_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class AccountScreen extends ConsumerStatefulWidget {
   const AccountScreen({super.key});
@@ -16,18 +17,15 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     super.initState();
     // Atur bottom nav bar index saat layar ini dibuka
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(currentNavIndexProvider.notifier).state = 2; // 3 untuk Profile
+      ref.read(currentNavIndexProvider.notifier).state = 3;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Tonton state otentikasi untuk mendapatkan data user
     final authState = ref.watch(authStateProvider);
     final user = authState.whenOrNull(authenticated: (_, user) => user);
 
-    // Jika user tidak ditemukan (seharusnya tidak terjadi jika halaman ini terlindungi),
-    // tampilkan loading atau pesan error.
     if (user == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -35,110 +33,200 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
       );
     }
 
+    final displayName = (user.name?.isNotEmpty ?? false)
+        ? user.name!
+        : user.email.split('@').first;
+    final roleLabel =
+        (user.jobTitle?.isNotEmpty ?? false) ? user.jobTitle! : user.role;
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  // Gradien untuk tampilan yang lebih modern
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF024670), Color(0xFF00639C)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blue.withOpacity(0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Profile',
+                  style: theme.textTheme.headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
                 ),
-                child: Column(
-                  children: [
-                    // Avatar dengan inisial nama
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.white,
-                      child: Text(
-                        user.email.substring(0, 2).toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF024670),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      user.email.split('@').first, // Tampilkan bagian sebelum @
+                IconButton(
+                  onPressed: () => context.push('/settings'),
+                  icon: const Icon(Icons.settings_outlined),
+                  tooltip: 'Settings',
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF0C4EA3), Color(0xFF0AA6E6)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    radius: 36,
+                    backgroundColor: Colors.white,
+                    child: Text(
+                      displayName.substring(0, 2).toUpperCase(),
                       style: const TextStyle(
-                        fontSize: 22,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Color(0xFF0C4EA3),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          displayName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          roleLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.white.withOpacity(.85),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _ProfileBadge(
+                              icon: Icons.verified_user_outlined,
+                              label: user.role,
+                            ),
+                            if (user.companyId != 0)
+                              _ProfileBadge(
+                                icon: Icons.apartment_outlined,
+                                label: 'Company #${user.companyId}',
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              margin: EdgeInsets.zero,
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      user.email,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.white.withOpacity(0.8),
-                      ),
+                      'Contact information',
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
                     ),
+                    const SizedBox(height: 12),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.email_outlined),
+                      title: Text(
+                        user.email,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: const Text('Work email'),
+                    ),
+                    if (user.phone != null && user.phone!.isNotEmpty)
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.phone_outlined),
+                        title: Text(
+                          user.phone!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: const Text('Mobile contact'),
+                      ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 30),
-
-            // --- MENU PENGATURAN ---
-            _MenuListItem(
-              title: 'Edit Profile',
-              icon: Icons.person_outline,
-              onTap: () {},
-            ),
-            _MenuListItem(
-              title: 'Change Password',
-              icon: Icons.lock_outline,
-              onTap: () {},
-            ),
-            const Divider(indent: 20, endIndent: 20, height: 30),
-            _MenuListItem(
-              title: 'Log Out',
-              icon: Icons.logout,
-              textColor: Colors.red,
-              onTap: () {
-                // Tampilkan dialog konfirmasi sebelum logout
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Log Out'),
-                    content: const Text('Are you sure you want to log out?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Cancel'),
-                      ),
-                      FilledButton(
-                        onPressed: () {
-                          ref.read(authStateProvider.notifier).signOut();
-                        },
-                        style:
-                            FilledButton.styleFrom(backgroundColor: Colors.red),
-                        child: const Text('Log Out'),
-                      ),
-                    ],
+            const SizedBox(height: 24),
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              margin: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  _MenuListItem(
+                    title: 'Edit profile',
+                    icon: Icons.person_outline,
+                    onTap: () => context.push('/account/edit'),
                   ),
-                );
-              },
+                  const Divider(height: 1),
+                  _MenuListItem(
+                    title: 'Change password',
+                    icon: Icons.lock_outline,
+                    onTap: () => context.push('/account/change-password'),
+                  ),
+                  const Divider(height: 1),
+                  _MenuListItem(
+                    title: 'Log out',
+                    icon: Icons.logout,
+                    textColor: const Color(0xFFD92D20),
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Log out'),
+                          content: const Text(
+                              'Are you sure you want to end the session?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text('Cancel'),
+                            ),
+                            FilledButton(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFFD92D20),
+                              ),
+                              onPressed: () {
+                                ref.read(authStateProvider.notifier).signOut();
+                                Navigator.of(context).pop();
+                              },
+                              child: const Text('Log out'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -148,7 +236,41 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   }
 }
 
-// Widget helper untuk membuat item menu yang konsisten
+class _ProfileBadge extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _ProfileBadge({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(.18),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: Colors.white),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MenuListItem extends StatelessWidget {
   final String title;
   final IconData icon;
@@ -164,16 +286,25 @@ class _MenuListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return ListTile(
-      leading: Icon(icon, color: textColor ?? Colors.grey[700]),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      leading: Icon(
+        icon,
+        color: textColor ?? const Color(0xFF344054),
+      ),
       title: Text(
         title,
-        style: TextStyle(
-          fontWeight: FontWeight.w500,
-          color: textColor,
+        style: theme.textTheme.bodyLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: textColor ?? const Color(0xFF1C2433),
         ),
       ),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+      trailing: Icon(
+        Icons.arrow_forward_ios_rounded,
+        size: 16,
+        color: textColor ?? const Color(0xFF98A2B3),
+      ),
       onTap: onTap,
     );
   }

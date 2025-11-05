@@ -10,6 +10,10 @@ class AuthUser with _$AuthUser {
     required int companyId,
     required String role,
     String? fcmToken,
+    String? name,
+    String? jobTitle,
+    String? phone,
+    String? avatarUrl,
   }) = _AuthUser;
 
   factory AuthUser.fromJson(Map<String, dynamic> json) =>

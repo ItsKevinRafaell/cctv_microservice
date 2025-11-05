@@ -11,22 +11,17 @@ class AppBottomNavBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Derive selected index from current route, do not modify providers during build
     final path = GoRouterState.of(context).uri.path;
-    final currentIndex = path.startsWith('/history')
+    final currentIndex = path.startsWith('/cameras')
         ? 1
-        : path.startsWith('/account')
+        : path.startsWith('/history')
             ? 2
-            : path.startsWith('/settings')
+            : path.startsWith('/account')
                 ? 3
-                : 0;
+                : path.startsWith('/settings')
+                    ? 4
+                    : 0;
 
     return NavigationBar(
-      backgroundColor: const Color(0xFF024670),
-      indicatorColor: Colors.white.withOpacity(0.15),
-      height: 70,
-
-      // FIX: Tambahkan properti ini untuk menyembunyikan semua label
-      labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-
       selectedIndex: currentIndex,
       onDestinationSelected: (index) {
         if (currentIndex == index) return;
@@ -35,36 +30,43 @@ class AppBottomNavBar extends ConsumerWidget {
             context.go('/');
             break;
           case 1:
-            context.go('/history');
+            context.go('/cameras');
             break;
           case 2:
-            context.go('/account');
+            context.go('/history');
             break;
           case 3:
+            context.go('/account');
+            break;
+          case 4:
             context.go('/settings');
             break;
         }
       },
-      // Menambahkan destinasi
       destinations: const [
         NavigationDestination(
-          icon: Icon(Icons.home_outlined, color: Colors.white70),
-          selectedIcon: Icon(Icons.home, color: Colors.white),
-          label: 'Home', // Label tetap wajib diisi, tapi tidak akan ditampilkan
+          icon: Icon(Icons.dashboard_outlined),
+          selectedIcon: Icon(Icons.dashboard_rounded),
+          label: 'Home',
         ),
         NavigationDestination(
-          icon: Icon(Icons.history_outlined, color: Colors.white70),
-          selectedIcon: Icon(Icons.history, color: Colors.white),
-          label: 'History',
+          icon: Icon(Icons.video_camera_front_outlined),
+          selectedIcon: Icon(Icons.video_camera_front_rounded),
+          label: 'Cameras',
         ),
         NavigationDestination(
-          icon: Icon(Icons.person_outlined, color: Colors.white70),
-          selectedIcon: Icon(Icons.person, color: Colors.white),
+          icon: Icon(Icons.notifications_none),
+          selectedIcon: Icon(Icons.notifications),
+          label: 'Alerts',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.person_outline),
+          selectedIcon: Icon(Icons.person),
           label: 'Profile',
         ),
         NavigationDestination(
-          icon: Icon(Icons.settings_outlined, color: Colors.white70),
-          selectedIcon: Icon(Icons.settings, color: Colors.white),
+          icon: Icon(Icons.settings_outlined),
+          selectedIcon: Icon(Icons.settings),
           label: 'Settings',
         ),
       ],
