@@ -57,6 +57,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               controller: _email,
               decoration: AuthTheme.input('E-mail'),
               keyboardType: TextInputType.emailAddress,
+              cursorColor: Colors.white,
+              style: const TextStyle(color: Colors.white),
               validator: (v) =>
                   (v == null || v.isEmpty) ? 'E-mail is required' : null,
             ),
@@ -70,7 +72,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     ? const SizedBox(
                         height: 22,
                         width: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2))
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ))
                     : const Text('Send'),
               ),
             ),
@@ -81,7 +87,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               children: [
                 const Text(
                   "Didn't get the e-mail yet? ",
-                  style: TextStyle(fontSize: 12.5, color: Colors.black54),
+                  style: TextStyle(fontSize: 12.5, color: Colors.white70),
                 ),
                 InkWell(
                   onTap: _resend,
@@ -92,7 +98,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
-                        color: AuthTheme.primaryBlue,
+                        color: AuthTheme.borderBlue,
                         decoration: TextDecoration.underline,
                       ),
                     ),
@@ -105,7 +111,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               children: [
                 const Text(
                   'Already have an account.',
-                  style: TextStyle(fontSize: 12.5, color: Colors.black54),
+                  style: TextStyle(fontSize: 12.5, color: Colors.white70),
                 ),
                 InkWell(
                   onTap: () => context.go('/sign-in'),
@@ -116,7 +122,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
-                        color: AuthTheme.primaryBlue,
+                        color: AuthTheme.borderBlue,
                         decoration: TextDecoration.underline,
                       ),
                     ),

@@ -7,8 +7,8 @@ import 'package:anomeye/features/cameras/domain/camera.dart';
 // FILE INI SUDAH BENAR, JANGAN DIUBAH
 final camerasListProvider =
     StateNotifierProvider<CamerasListController, AsyncValue<List<Camera>>>(
-  (ref) => CamerasListController(ref),
-);
+      (ref) => CamerasListController(ref),
+    );
 
 class CamerasListController extends StateNotifier<AsyncValue<List<Camera>>> {
   // Constructor ini sengaja kosong agar bisa di-load manual dari UI
@@ -31,16 +31,20 @@ class CamerasListController extends StateNotifier<AsyncValue<List<Camera>>> {
 // ... sisa file
 
 /// State detail kamera
-final cameraDetailProvider = StateNotifierProvider.family<
-    CameraDetailController, AsyncValue<Camera>, String>(
-  // CHANGE 2: Pass the whole `ref` object here too
-  (ref, id) => CameraDetailController(ref, id),
-);
+final cameraDetailProvider =
+    StateNotifierProvider.family<
+      CameraDetailController,
+      AsyncValue<Camera>,
+      String
+    >(
+      // CHANGE 2: Pass the whole `ref` object here too
+      (ref, id) => CameraDetailController(ref, id),
+    );
 
 class CameraDetailController extends StateNotifier<AsyncValue<Camera>> {
   // CHANGE 6: The constructor now accepts `Ref`
   CameraDetailController(this._ref, this.id)
-      : super(const AsyncValue.loading());
+    : super(const AsyncValue.loading());
   // CHANGE 7: The type is now `Ref`
   final Ref _ref;
   final String id;

@@ -12,7 +12,8 @@ part of 'anomaly.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 Anomaly _$AnomalyFromJson(Map<String, dynamic> json) {
   return _Anomaly.fromJson(json);
@@ -44,13 +45,14 @@ abstract class $AnomalyCopyWith<$Res> {
   factory $AnomalyCopyWith(Anomaly value, $Res Function(Anomaly) then) =
       _$AnomalyCopyWithImpl<$Res, Anomaly>;
   @useResult
-  $Res call(
-      {String id,
-      String cameraId,
-      String anomalyType,
-      double confidence,
-      String? videoClipUrl,
-      DateTime reportedAt});
+  $Res call({
+    String id,
+    String cameraId,
+    String anomalyType,
+    double confidence,
+    String? videoClipUrl,
+    DateTime reportedAt,
+  });
 }
 
 /// @nodoc
@@ -75,49 +77,54 @@ class _$AnomalyCopyWithImpl<$Res, $Val extends Anomaly>
     Object? videoClipUrl = freezed,
     Object? reportedAt = null,
   }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      cameraId: null == cameraId
-          ? _value.cameraId
-          : cameraId // ignore: cast_nullable_to_non_nullable
-              as String,
-      anomalyType: null == anomalyType
-          ? _value.anomalyType
-          : anomalyType // ignore: cast_nullable_to_non_nullable
-              as String,
-      confidence: null == confidence
-          ? _value.confidence
-          : confidence // ignore: cast_nullable_to_non_nullable
-              as double,
-      videoClipUrl: freezed == videoClipUrl
-          ? _value.videoClipUrl
-          : videoClipUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-      reportedAt: null == reportedAt
-          ? _value.reportedAt
-          : reportedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            id: null == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as String,
+            cameraId: null == cameraId
+                ? _value.cameraId
+                : cameraId // ignore: cast_nullable_to_non_nullable
+                      as String,
+            anomalyType: null == anomalyType
+                ? _value.anomalyType
+                : anomalyType // ignore: cast_nullable_to_non_nullable
+                      as String,
+            confidence: null == confidence
+                ? _value.confidence
+                : confidence // ignore: cast_nullable_to_non_nullable
+                      as double,
+            videoClipUrl: freezed == videoClipUrl
+                ? _value.videoClipUrl
+                : videoClipUrl // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            reportedAt: null == reportedAt
+                ? _value.reportedAt
+                : reportedAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime,
+          )
+          as $Val,
+    );
   }
 }
 
 /// @nodoc
 abstract class _$$AnomalyImplCopyWith<$Res> implements $AnomalyCopyWith<$Res> {
   factory _$$AnomalyImplCopyWith(
-          _$AnomalyImpl value, $Res Function(_$AnomalyImpl) then) =
-      __$$AnomalyImplCopyWithImpl<$Res>;
+    _$AnomalyImpl value,
+    $Res Function(_$AnomalyImpl) then,
+  ) = __$$AnomalyImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String id,
-      String cameraId,
-      String anomalyType,
-      double confidence,
-      String? videoClipUrl,
-      DateTime reportedAt});
+  $Res call({
+    String id,
+    String cameraId,
+    String anomalyType,
+    double confidence,
+    String? videoClipUrl,
+    DateTime reportedAt,
+  });
 }
 
 /// @nodoc
@@ -125,8 +132,9 @@ class __$$AnomalyImplCopyWithImpl<$Res>
     extends _$AnomalyCopyWithImpl<$Res, _$AnomalyImpl>
     implements _$$AnomalyImplCopyWith<$Res> {
   __$$AnomalyImplCopyWithImpl(
-      _$AnomalyImpl _value, $Res Function(_$AnomalyImpl) _then)
-      : super(_value, _then);
+    _$AnomalyImpl _value,
+    $Res Function(_$AnomalyImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of Anomaly
   /// with the given fields replaced by the non-null parameter values.
@@ -140,64 +148,67 @@ class __$$AnomalyImplCopyWithImpl<$Res>
     Object? videoClipUrl = freezed,
     Object? reportedAt = null,
   }) {
-    return _then(_$AnomalyImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      cameraId: null == cameraId
-          ? _value.cameraId
-          : cameraId // ignore: cast_nullable_to_non_nullable
-              as String,
-      anomalyType: null == anomalyType
-          ? _value.anomalyType
-          : anomalyType // ignore: cast_nullable_to_non_nullable
-              as String,
-      confidence: null == confidence
-          ? _value.confidence
-          : confidence // ignore: cast_nullable_to_non_nullable
-              as double,
-      videoClipUrl: freezed == videoClipUrl
-          ? _value.videoClipUrl
-          : videoClipUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-      reportedAt: null == reportedAt
-          ? _value.reportedAt
-          : reportedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-    ));
+    return _then(
+      _$AnomalyImpl(
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as String,
+        cameraId: null == cameraId
+            ? _value.cameraId
+            : cameraId // ignore: cast_nullable_to_non_nullable
+                  as String,
+        anomalyType: null == anomalyType
+            ? _value.anomalyType
+            : anomalyType // ignore: cast_nullable_to_non_nullable
+                  as String,
+        confidence: null == confidence
+            ? _value.confidence
+            : confidence // ignore: cast_nullable_to_non_nullable
+                  as double,
+        videoClipUrl: freezed == videoClipUrl
+            ? _value.videoClipUrl
+            : videoClipUrl // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        reportedAt: null == reportedAt
+            ? _value.reportedAt
+            : reportedAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$AnomalyImpl implements _Anomaly {
-  const _$AnomalyImpl(
-      {required this.id,
-      required this.cameraId,
-      required this.anomalyType,
-      required this.confidence,
-      this.videoClipUrl,
-      required this.reportedAt});
+  const _$AnomalyImpl({
+    required this.id,
+    required this.cameraId,
+    required this.anomalyType,
+    required this.confidence,
+    this.videoClipUrl,
+    required this.reportedAt,
+  });
 
   factory _$AnomalyImpl.fromJson(Map<String, dynamic> json) =>
       _$$AnomalyImplFromJson(json);
 
   @override
   final String id;
-// pakai String agar fleksibel (int/uuid)
+  // pakai String agar fleksibel (int/uuid)
   @override
   final String cameraId;
-// "cam1"
+  // "cam1"
   @override
   final String anomalyType;
-// "intrusion", dst
+  // "intrusion", dst
   @override
   final double confidence;
-// 0.0 - 1.0
+  // 0.0 - 1.0
   @override
   final String? videoClipUrl;
-// optional bukti
+  // optional bukti
   @override
   final DateTime reportedAt;
 
@@ -226,8 +237,15 @@ class _$AnomalyImpl implements _Anomaly {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, cameraId, anomalyType,
-      confidence, videoClipUrl, reportedAt);
+  int get hashCode => Object.hash(
+    runtimeType,
+    id,
+    cameraId,
+    anomalyType,
+    confidence,
+    videoClipUrl,
+    reportedAt,
+  );
 
   /// Create a copy of Anomaly
   /// with the given fields replaced by the non-null parameter values.
@@ -239,20 +257,19 @@ class _$AnomalyImpl implements _Anomaly {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$AnomalyImplToJson(
-      this,
-    );
+    return _$$AnomalyImplToJson(this);
   }
 }
 
 abstract class _Anomaly implements Anomaly {
-  const factory _Anomaly(
-      {required final String id,
-      required final String cameraId,
-      required final String anomalyType,
-      required final double confidence,
-      final String? videoClipUrl,
-      required final DateTime reportedAt}) = _$AnomalyImpl;
+  const factory _Anomaly({
+    required final String id,
+    required final String cameraId,
+    required final String anomalyType,
+    required final double confidence,
+    final String? videoClipUrl,
+    required final DateTime reportedAt,
+  }) = _$AnomalyImpl;
 
   factory _Anomaly.fromJson(Map<String, dynamic> json) = _$AnomalyImpl.fromJson;
 

@@ -23,8 +23,8 @@ class RecordingsApi {
     // backend shape:
     // { camera_id, from, to, count, items: [ {key,size,url?}, ... ] }
     final cameraIdResp = (resp.data['camera_id'] as String?) ?? cameraId;
-    final items =
-        (resp.data['items'] as List<dynamic>).cast<Map<String, dynamic>>();
+    final items = (resp.data['items'] as List<dynamic>)
+        .cast<Map<String, dynamic>>();
 
     // API tidak mengirim started_at/ended_at; derive dari key:
     final List<Recording> result = [];
@@ -44,14 +44,16 @@ class RecordingsApi {
       start ??= DateTime.now().toUtc();
       final end = start.add(const Duration(seconds: 60));
 
-      result.add(Recording(
-        cameraId: cameraIdResp,
-        startedAt: start.toUtc(),
-        endedAt: end.toUtc(),
-        key: key,
-        sizeBytes: size,
-        url: url,
-      ));
+      result.add(
+        Recording(
+          cameraId: cameraIdResp,
+          startedAt: start.toUtc(),
+          endedAt: end.toUtc(),
+          key: key,
+          sizeBytes: size,
+          url: url,
+        ),
+      );
     }
     // urut terbaru di atas
     result.sort((a, b) => b.startedAt.compareTo(a.startedAt));

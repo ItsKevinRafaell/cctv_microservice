@@ -13,17 +13,18 @@ class FcmState {
   const FcmState({this.token, this.permissionGranted = false});
 
   FcmState copyWith({String? token, bool? permissionGranted}) => FcmState(
-        token: token ?? this.token,
-        permissionGranted: permissionGranted ?? this.permissionGranted,
-      );
+    token: token ?? this.token,
+    permissionGranted: permissionGranted ?? this.permissionGranted,
+  );
 }
 
 final fcmServiceProvider = Provider<FcmService>((ref) {
   return FcmService(FirebaseMessaging.instance);
 });
 
-final fcmControllerProvider =
-    StateNotifierProvider<FcmController, FcmState>((ref) {
+final fcmControllerProvider = StateNotifierProvider<FcmController, FcmState>((
+  ref,
+) {
   final service = ref.watch(fcmServiceProvider);
   final store = ref.watch(secureFcmStoreProvider);
   // Tambahkan AuthRepo untuk bisa memanggil API backend
@@ -41,14 +42,15 @@ class FcmController extends StateNotifier<FcmState> {
   final AuthRepo _authRepo; // Tambahkan AuthRepo
   StreamSubscription<String>? _sub;
 
-  FcmController(this._service, this._store, this._authRepo) : super(const FcmState());
+  FcmController(this._service, this._store, this._authRepo)
+    : super(const FcmState());
 
   Future<void> init() async {
     // Request notification permissions
     final settings = await _service.requestPermission();
     final permissionGranted =
         settings.authorizationStatus == AuthorizationStatus.authorized ||
-            settings.authorizationStatus == AuthorizationStatus.provisional;
+        settings.authorizationStatus == AuthorizationStatus.provisional;
 
     // Get the FCM token
     String? token;
@@ -78,10 +80,7 @@ class FcmController extends StateNotifier<FcmState> {
     }
 
     // Update state with permission status and token
-    state = state.copyWith(
-      permissionGranted: permissionGranted,
-      token: token,
-    );
+    state = state.copyWith(permissionGranted: permissionGranted, token: token);
   }
 
   Future<void> clear() async {

@@ -39,7 +39,9 @@ class AuthRepoImpl implements AuthRepo {
     if (claims != null) {
       final exp = claims['exp'];
       if (exp is num) {
-        final expiresAt = DateTime.fromMillisecondsSinceEpoch(exp.toInt() * 1000);
+        final expiresAt = DateTime.fromMillisecondsSinceEpoch(
+          exp.toInt() * 1000,
+        );
         if (DateTime.now().isAfter(expiresAt)) {
           await store.clear();
           return const AuthState.unauthenticated();
@@ -47,11 +49,15 @@ class AuthRepoImpl implements AuthRepo {
       }
       final email = (claims['email'] ?? claims['sub'] ?? '') as String;
       final role = (claims['role'] ?? 'user') as String;
-      final cid = (claims['company_id'] is num) ? (claims['company_id'] as num).toInt() : 0;
+      final cid = (claims['company_id'] is num)
+          ? (claims['company_id'] as num).toInt()
+          : 0;
       return AuthState.authenticated(
         token: t,
         user: AuthUser(
-          id: (claims['user_id'] is num) ? (claims['user_id'] as num).toInt() : 0,
+          id: (claims['user_id'] is num)
+              ? (claims['user_id'] as num).toInt()
+              : 0,
           email: email,
           companyId: cid,
           role: role,
@@ -62,15 +68,26 @@ class AuthRepoImpl implements AuthRepo {
   }
 
   @override
-  Future<AuthState> signIn({required String email, required String password}) async {
+  Future<AuthState> signIn({
+    required String email,
+    required String password,
+  }) async {
     final (token, user) = await api.signIn(email, password);
     await store.save(token);
     return AuthState.authenticated(token: token, user: user);
   }
 
   @override
-  Future<AuthState> signUp({required String email, required String password, required String companyId}) async {
-    final (token, user) = await api.signUp(email: email, password: password, companyId: companyId);
+  Future<AuthState> signUp({
+    required String email,
+    required String password,
+    required String companyId,
+  }) async {
+    final (token, user) = await api.signUp(
+      email: email,
+      password: password,
+      companyId: companyId,
+    );
     await store.save(token);
     return AuthState.authenticated(token: token, user: user);
   }
@@ -87,4 +104,3 @@ class AuthRepoImpl implements AuthRepo {
     await api.deleteFcmToken();
   }
 }
-

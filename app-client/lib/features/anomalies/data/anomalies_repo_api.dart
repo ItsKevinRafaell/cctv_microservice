@@ -69,7 +69,9 @@ class AnomaliesRepoApi implements AnomaliesRepo {
     } else {
       return [];
     }
-    var items = list.map((e) => _mapAnomaly((e as Map).cast<String, dynamic>())).toList();
+    var items = list
+        .map((e) => _mapAnomaly((e as Map).cast<String, dynamic>()))
+        .toList();
     // Client-side filter jika cameraId diberikan (backend mungkin tidak mendukung param ini)
     if (cameraId != null && cameraId.isNotEmpty) {
       items = items.where((a) => a.cameraId == cameraId).toList();
@@ -94,15 +96,28 @@ class AnomaliesRepoApi implements AnomaliesRepo {
   Anomaly _mapAnomaly(Map<String, dynamic> m) {
     final rawId = m['id'] ?? m['anomaly_id'] ?? m['uuid'] ?? '';
     final id = rawId.toString();
-    final cameraId = (m['camera_id'] ?? m['cameraId'] ?? (m['camera'] is Map ? m['camera']['id'] : null) ?? '').toString();
-    final anomalyType = (m['anomaly_type'] ?? m['type'] ?? 'anomaly').toString();
+    final cameraId =
+        (m['camera_id'] ??
+                m['cameraId'] ??
+                (m['camera'] is Map ? m['camera']['id'] : null) ??
+                '')
+            .toString();
+    final anomalyType = (m['anomaly_type'] ?? m['type'] ?? 'anomaly')
+        .toString();
     final confidenceVal = m['confidence'] ?? m['score'] ?? m['prob'] ?? 0.0;
-    final confidence = (confidenceVal is num) ? confidenceVal.toDouble() : double.tryParse(confidenceVal.toString()) ?? 0.0;
-    final videoClipUrl = (m['video_clip_url'] ?? m['video_url'] ?? m['clip_url'] ?? m['url'])?.toString();
-    final ts = (m['reported_at'] ?? m['created_at'] ?? m['timestamp'])?.toString();
+    final confidence = (confidenceVal is num)
+        ? confidenceVal.toDouble()
+        : double.tryParse(confidenceVal.toString()) ?? 0.0;
+    final videoClipUrl =
+        (m['video_clip_url'] ?? m['video_url'] ?? m['clip_url'] ?? m['url'])
+            ?.toString();
+    final ts = (m['reported_at'] ?? m['created_at'] ?? m['timestamp'])
+        ?.toString();
     DateTime reportedAt;
     try {
-      reportedAt = DateTime.parse(ts ?? DateTime.now().toUtc().toIso8601String());
+      reportedAt = DateTime.parse(
+        ts ?? DateTime.now().toUtc().toIso8601String(),
+      );
     } catch (_) {
       reportedAt = DateTime.now().toUtc();
     }
@@ -116,4 +131,3 @@ class AnomaliesRepoApi implements AnomaliesRepo {
     );
   }
 }
-

@@ -10,6 +10,7 @@ import 'package:anomeye/features/cameras/presentation/screens/home_dashboard_scr
 import 'package:anomeye/features/cameras/presentation/screens/cameras_list_screen.dart';
 import 'package:anomeye/features/settings/presentation/settings_screen.dart';
 import 'package:anomeye/features/streaming/presentation/live_player_screen.dart';
+import 'package:anomeye/features/statistics/presentation/screens/statistics_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -22,8 +23,10 @@ CustomTransitionPage<T> _slidePage<T>({
   Duration duration = const Duration(milliseconds: 280),
   Curve curve = Curves.easeOutCubic,
 }) {
-  final tween = Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
-      .chain(CurveTween(curve: curve));
+  final tween = Tween<Offset>(
+    begin: const Offset(1, 0),
+    end: Offset.zero,
+  ).chain(CurveTween(curve: curve));
   return CustomTransitionPage<T>(
     key: state.pageKey,
     child: child,
@@ -40,48 +43,63 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/sign-in',
     routes: [
       GoRoute(
-          path: '/sign-in',
-          name: 'sign-in',
-          pageBuilder: (_, s) => const NoTransitionPage(child: SignInScreen())),
+        path: '/sign-in',
+        name: 'sign-in',
+        pageBuilder: (_, s) => const NoTransitionPage(child: SignInScreen()),
+      ),
       GoRoute(
-          path: '/',
-          name: 'home',
-          pageBuilder: (_, s) =>
-              const NoTransitionPage(child: HomeDashboard())),
+        path: '/',
+        name: 'home',
+        pageBuilder: (_, s) => const NoTransitionPage(child: HomeDashboard()),
+      ),
       GoRoute(
-          path: '/cameras',
-          name: 'cameras',
-          pageBuilder: (_, s) =>
-              const NoTransitionPage(child: CamerasListScreen())),
+        path: '/cameras',
+        name: 'cameras',
+        pageBuilder: (_, s) =>
+            const NoTransitionPage(child: CamerasListScreen()),
+      ),
       GoRoute(
         path: '/camera/:id',
         name: 'camera-detail',
         pageBuilder: (_, s) {
           final id = s.pathParameters['id']!;
-          return _slidePage(state: s, child: CameraDetailScreen(cameraId: id));
+          return _slidePage(
+            state: s,
+            child: CameraDetailScreen(cameraId: id),
+          );
         },
       ),
       GoRoute(
-          path: '/forgot-password',
-          builder: (_, __) => const ForgotPasswordScreen()),
+        path: '/forgot-password',
+        builder: (_, __) => const ForgotPasswordScreen(),
+      ),
       GoRoute(
-          path: '/sign-up',
-          name: 'sign-up',
-          pageBuilder: (_, s) => const NoTransitionPage(child: SignUpScreen())),
+        path: '/sign-up',
+        name: 'sign-up',
+        pageBuilder: (_, s) => const NoTransitionPage(child: SignUpScreen()),
+      ),
       GoRoute(
-          path: '/history',
-          name: 'history',
-          pageBuilder: (_, s) =>
-              const NoTransitionPage(child: AnomalyHistoryScreen())),
+        path: '/history',
+        name: 'history',
+        pageBuilder: (_, s) =>
+            const NoTransitionPage(child: AnomalyHistoryScreen()),
+      ),
       GoRoute(
-          path: '/settings',
-          name: 'settings',
-          builder: (_, __) => const SettingsScreen()),
+        path: '/stats',
+        name: 'stats',
+        pageBuilder: (_, s) =>
+            const NoTransitionPage(child: StatisticsScreen()),
+      ),
       GoRoute(
-          path: '/account',
-          name: 'account',
-          pageBuilder: (_, s) =>
-              const NoTransitionPage(child: AccountScreen())),
+        path: '/settings',
+        name: 'settings',
+        builder: (_, __) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/account',
+        name: 'account',
+        pageBuilder: (_, s) => const NoTransitionPage(child: AccountScreen()),
+      ),
       GoRoute(
         path: '/cameras/:id/recordings',
         name: 'recordings',
@@ -102,13 +120,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (_, s) {
           final id = s.pathParameters['id']!;
           return _slidePage(
-              state: s, child: AnomalyDetailScreen(anomalyId: id));
+            state: s,
+            child: AnomalyDetailScreen(anomalyId: id),
+          );
         },
       ),
     ],
     redirect: (context, state) {
       final path = state.uri.path;
-      final loggingIn = path == '/sign-in' || path == '/sign-up';
+      const authPaths = ['/sign-in', '/sign-up', '/forgot-password'];
+      final loggingIn = authPaths.contains(path);
 
       final authed = auth.maybeWhen(
         authenticated: (_, __) => true,

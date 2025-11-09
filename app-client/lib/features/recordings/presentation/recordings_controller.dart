@@ -14,8 +14,12 @@ class RecordingsController extends StateNotifier<AsyncValue<List<Recording>>> {
   final RecordingsRepo repo;
   RecordingsController(this.repo) : super(const AsyncLoading());
 
-  Future<void> fetch(String cameraId,
-      {DateTime? from, DateTime? to, bool presign = true}) async {
+  Future<void> fetch(
+    String cameraId, {
+    DateTime? from,
+    DateTime? to,
+    bool presign = true,
+  }) async {
     state = const AsyncLoading();
     try {
       final items = await repo.list(
@@ -31,7 +35,10 @@ class RecordingsController extends StateNotifier<AsyncValue<List<Recording>>> {
   }
 }
 
-final recordingsControllerProvider = StateNotifierProvider.autoDispose<
-    RecordingsController, AsyncValue<List<Recording>>>((ref) {
-  return RecordingsController(ref.watch(recordingsRepoProvider));
-});
+final recordingsControllerProvider =
+    StateNotifierProvider.autoDispose<
+      RecordingsController,
+      AsyncValue<List<Recording>>
+    >((ref) {
+      return RecordingsController(ref.watch(recordingsRepoProvider));
+    });

@@ -1,0 +1,63 @@
+AnomEye Run Guide
+=================
+
+Prerequisites
+- Docker Desktop running with WSL2 backend.
+- Git Bash or WSL for executing bash scripts.
+- Flutter SDK 3.3+ with Android toolchain (or physical Android device with USB debugging enabled).
+- Python 3.10+ if you plan to push sample clips to the AI worker.
+
+Backend Stack
+-------------
+1. Open a terminal at `cctv_microservice` and start every service:
+   ```
+   docker compose up -d --build
+   ```
+2. Confirm the API is up:
+   ```
+   docker compose ps
+   ```
+   Ensure `api_main` shows `Up` on `0.0.0.0:8080`.
+3. Seed demo data (company3, user, camera, anomaly). Run this from Git Bash/WSL:
+   ```
+   bash scripts/seed_company3.sh
+   ```
+   Credentials after seeding: `company3admin@example.com / Passw0rd123!`.
+4. Start a video source for camera `cam3` (Windows webcam example):
+   ```
+   powershell -ExecutionPolicy Bypass -File cctv-camera/start_cam3_stream.ps1 -VideoDevice "Integrated Camera" -Fps 30 -Size "640x480" -NoScale -Protocol rtmp
+   ```
+   HLS preview: http://127.0.0.1:8888/cam3/index.m3u8
+5. (Optional) Send short clips to the AI worker so anomalies keep appearing:
+   ```
+   python cctv-camera/send_webcam_clips.py --camera-id cam3 --source rtmp://127.0.0.1:1935/cam3 --seconds 8 --no-preview --ffmpeg-capture --force-anomaly
+   ```
+6. Watch logs when debugging:
+   ```
+   docker compose logs -f api_main api_ingestion ai_worker push-service
+   ```
+7. To reset everything, run `docker compose down -v`, then repeat the steps above (including the seed script).
+
+Flutter App
+-----------
+1. In another terminal, go to `cctv_microservice/app-client`.
+2. Fetch packages (first run or after dependency changes):
+   ```
+   flutter pub get
+   ```
+3. Ensure an Android emulator or USB device is connected (`flutter devices`).
+4. Run the app with backend base URLs pointing to your host machine:
+   - Android emulator: `10.0.2.2` reaches the host.
+   - Physical device on the same Wi-Fi: use the host's LAN IP.
+   Example launch command:
+   ```
+   flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080 --dart-define=HLS_BASE_URL=http://10.0.2.2:8888
+   ```
+5. Sign in with the seeded credentials above.
+6. From Settings in the app you can trigger a "Test notification" to verify push + custom alert sounds.
+
+Tips
+----
+- If the app shows network/timeout errors, confirm the backend containers and your IP/port mappings.
+- For long recordings, also start `archiver_manager`, `archive_sync`, and `recording_indexer` services via Docker Compose.
+- When switching devices or networks, update both `API_BASE_URL` and `HLS_BASE_URL` accordingly.

@@ -7,13 +7,13 @@ part of 'camera.dart';
 // **************************************************************************
 
 _$CameraImpl _$$CameraImplFromJson(Map<String, dynamic> json) => _$CameraImpl(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      location: json['location'] as String?,
-      online: json['online'] as bool? ?? false,
-      activeAlerts: (json['activeAlerts'] as num?)?.toInt() ?? 0,
-      streamUrl: json['streamUrl'] as String?,
-    );
+  id: json['id'] as String,
+  name: json['name'] as String,
+  location: json['location'] as String?,
+  online: json['online'] as bool? ?? false,
+  activeAlerts: (json['activeAlerts'] as num?)?.toInt() ?? 0,
+  streamUrl: json['streamUrl'] as String?,
+);
 
 Map<String, dynamic> _$$CameraImplToJson(_$CameraImpl instance) =>
     <String, dynamic>{

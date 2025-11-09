@@ -12,7 +12,8 @@ part of 'auth_user.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 AuthUser _$AuthUserFromJson(Map<String, dynamic> json) {
   return _AuthUser.fromJson(json);
@@ -41,8 +42,13 @@ abstract class $AuthUserCopyWith<$Res> {
   factory $AuthUserCopyWith(AuthUser value, $Res Function(AuthUser) then) =
       _$AuthUserCopyWithImpl<$Res, AuthUser>;
   @useResult
-  $Res call(
-      {int id, String email, int companyId, String role, String? fcmToken});
+  $Res call({
+    int id,
+    String email,
+    int companyId,
+    String role,
+    String? fcmToken,
+  });
 }
 
 /// @nodoc
@@ -66,28 +72,31 @@ class _$AuthUserCopyWithImpl<$Res, $Val extends AuthUser>
     Object? role = null,
     Object? fcmToken = freezed,
   }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      email: null == email
-          ? _value.email
-          : email // ignore: cast_nullable_to_non_nullable
-              as String,
-      companyId: null == companyId
-          ? _value.companyId
-          : companyId // ignore: cast_nullable_to_non_nullable
-              as int,
-      role: null == role
-          ? _value.role
-          : role // ignore: cast_nullable_to_non_nullable
-              as String,
-      fcmToken: freezed == fcmToken
-          ? _value.fcmToken
-          : fcmToken // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            id: null == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as int,
+            email: null == email
+                ? _value.email
+                : email // ignore: cast_nullable_to_non_nullable
+                      as String,
+            companyId: null == companyId
+                ? _value.companyId
+                : companyId // ignore: cast_nullable_to_non_nullable
+                      as int,
+            role: null == role
+                ? _value.role
+                : role // ignore: cast_nullable_to_non_nullable
+                      as String,
+            fcmToken: freezed == fcmToken
+                ? _value.fcmToken
+                : fcmToken // ignore: cast_nullable_to_non_nullable
+                      as String?,
+          )
+          as $Val,
+    );
   }
 }
 
@@ -95,12 +104,18 @@ class _$AuthUserCopyWithImpl<$Res, $Val extends AuthUser>
 abstract class _$$AuthUserImplCopyWith<$Res>
     implements $AuthUserCopyWith<$Res> {
   factory _$$AuthUserImplCopyWith(
-          _$AuthUserImpl value, $Res Function(_$AuthUserImpl) then) =
-      __$$AuthUserImplCopyWithImpl<$Res>;
+    _$AuthUserImpl value,
+    $Res Function(_$AuthUserImpl) then,
+  ) = __$$AuthUserImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {int id, String email, int companyId, String role, String? fcmToken});
+  $Res call({
+    int id,
+    String email,
+    int companyId,
+    String role,
+    String? fcmToken,
+  });
 }
 
 /// @nodoc
@@ -108,8 +123,9 @@ class __$$AuthUserImplCopyWithImpl<$Res>
     extends _$AuthUserCopyWithImpl<$Res, _$AuthUserImpl>
     implements _$$AuthUserImplCopyWith<$Res> {
   __$$AuthUserImplCopyWithImpl(
-      _$AuthUserImpl _value, $Res Function(_$AuthUserImpl) _then)
-      : super(_value, _then);
+    _$AuthUserImpl _value,
+    $Res Function(_$AuthUserImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of AuthUser
   /// with the given fields replaced by the non-null parameter values.
@@ -122,40 +138,43 @@ class __$$AuthUserImplCopyWithImpl<$Res>
     Object? role = null,
     Object? fcmToken = freezed,
   }) {
-    return _then(_$AuthUserImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      email: null == email
-          ? _value.email
-          : email // ignore: cast_nullable_to_non_nullable
-              as String,
-      companyId: null == companyId
-          ? _value.companyId
-          : companyId // ignore: cast_nullable_to_non_nullable
-              as int,
-      role: null == role
-          ? _value.role
-          : role // ignore: cast_nullable_to_non_nullable
-              as String,
-      fcmToken: freezed == fcmToken
-          ? _value.fcmToken
-          : fcmToken // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ));
+    return _then(
+      _$AuthUserImpl(
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as int,
+        email: null == email
+            ? _value.email
+            : email // ignore: cast_nullable_to_non_nullable
+                  as String,
+        companyId: null == companyId
+            ? _value.companyId
+            : companyId // ignore: cast_nullable_to_non_nullable
+                  as int,
+        role: null == role
+            ? _value.role
+            : role // ignore: cast_nullable_to_non_nullable
+                  as String,
+        fcmToken: freezed == fcmToken
+            ? _value.fcmToken
+            : fcmToken // ignore: cast_nullable_to_non_nullable
+                  as String?,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$AuthUserImpl implements _AuthUser {
-  const _$AuthUserImpl(
-      {required this.id,
-      required this.email,
-      required this.companyId,
-      required this.role,
-      this.fcmToken});
+  const _$AuthUserImpl({
+    required this.id,
+    required this.email,
+    required this.companyId,
+    required this.role,
+    this.fcmToken,
+  });
 
   factory _$AuthUserImpl.fromJson(Map<String, dynamic> json) =>
       _$$AuthUserImplFromJson(json);
@@ -205,19 +224,18 @@ class _$AuthUserImpl implements _AuthUser {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$AuthUserImplToJson(
-      this,
-    );
+    return _$$AuthUserImplToJson(this);
   }
 }
 
 abstract class _AuthUser implements AuthUser {
-  const factory _AuthUser(
-      {required final int id,
-      required final String email,
-      required final int companyId,
-      required final String role,
-      final String? fcmToken}) = _$AuthUserImpl;
+  const factory _AuthUser({
+    required final int id,
+    required final String email,
+    required final int companyId,
+    required final String role,
+    final String? fcmToken,
+  }) = _$AuthUserImpl;
 
   factory _AuthUser.fromJson(Map<String, dynamic> json) =
       _$AuthUserImpl.fromJson;

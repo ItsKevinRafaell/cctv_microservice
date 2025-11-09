@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:anomeye/features/streaming/domain/stream_url_builder.dart';
 import 'package:video_player/video_player.dart';
 
@@ -18,19 +19,22 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   @override
   void initState() {
     super.initState();
-    final String url = widget.hlsUrl ?? ref.read(streamUrlProvider(widget.cameraId));
+    final String url =
+        widget.hlsUrl ?? ref.read(streamUrlProvider(widget.cameraId));
     _controller = VideoPlayerController.networkUrl(Uri.parse(url))
       ..setLooping(true)
-      ..initialize().then((_) {
-        if (mounted) setState(() {});
-        _controller?.play();
-      }).catchError((e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to start live: $e')),
-          );
-        }
-      });
+      ..initialize()
+          .then((_) {
+            if (mounted) setState(() {});
+            _controller?.play();
+          })
+          .catchError((e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Failed to start live: $e')),
+              );
+            }
+          });
   }
 
   @override
@@ -41,11 +45,12 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final String url = widget.hlsUrl ?? ref.watch(streamUrlProvider(widget.cameraId));
+    final String url =
+        widget.hlsUrl ?? ref.watch(streamUrlProvider(widget.cameraId));
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Live • ${widget.cameraId}'),
+        title: Text('Live - ${widget.cameraId}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.replay),
@@ -57,17 +62,24 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
               } catch (_) {}
               _controller = VideoPlayerController.networkUrl(Uri.parse(url))
                 ..setLooping(true)
-                ..initialize().then((_) {
-                  if (mounted) setState(() {});
-                  _controller?.play();
-                }).catchError((e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to reopen: $e')),
-                    );
-                  }
-                });
+                ..initialize()
+                    .then((_) {
+                      if (mounted) setState(() {});
+                      _controller?.play();
+                    })
+                    .catchError((e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to reopen: $e')),
+                        );
+                      }
+                    });
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Settings',
+            onPressed: () => context.push('/settings'),
           ),
         ],
       ),
@@ -78,9 +90,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
             decoration: const BoxDecoration(color: Colors.black),
             child: _controller != null && _controller!.value.isInitialized
                 ? VideoPlayer(_controller!)
-                : const Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                : const Center(child: CircularProgressIndicator()),
           ),
         ),
       ),

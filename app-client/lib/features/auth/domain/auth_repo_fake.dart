@@ -15,17 +15,20 @@ class AuthRepoFake implements AuthRepo {
     if (t == null) return const AuthState.unauthenticated();
     // user dummy
     final u = AuthUser(
-        id: 1,
-        email: 'admin@ujicoba.com',
-        companyId: 1,
-        role: 'company_admin',
-        fcmToken: _fcm);
+      id: 1,
+      email: 'admin@ujicoba.com',
+      companyId: 1,
+      role: 'company_admin',
+      fcmToken: _fcm,
+    );
     return AuthState.authenticated(token: t, user: u);
   }
 
   @override
-  Future<AuthState> signIn(
-      {required String email, required String password}) async {
+  Future<AuthState> signIn({
+    required String email,
+    required String password,
+  }) async {
     await Future.delayed(const Duration(milliseconds: 400));
     if (email.isEmpty || password.length < 3) {
       throw Exception('Invalid credential');
@@ -33,11 +36,12 @@ class AuthRepoFake implements AuthRepo {
     final token = 'fake-${DateTime.now().millisecondsSinceEpoch}';
     await _store.save(token);
     final u = AuthUser(
-        id: 1,
-        email: email,
-        companyId: 1,
-        role: 'company_admin',
-        fcmToken: _fcm);
+      id: 1,
+      email: email,
+      companyId: 1,
+      role: 'company_admin',
+      fcmToken: _fcm,
+    );
     return AuthState.authenticated(token: token, user: u);
   }
 

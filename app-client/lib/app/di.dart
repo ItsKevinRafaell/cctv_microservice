@@ -1,4 +1,4 @@
-﻿// lib/app/di.dart
+// lib/app/di.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 
@@ -36,23 +36,25 @@ final authRepoProvider = Provider<AuthRepo>((ref) {
   return AuthRepoImpl(AuthApi(dio), store);
 });
 
-final authStateProvider =
-    StateNotifierProvider<AuthController, AuthState>((ref) {
+final authStateProvider = StateNotifierProvider<AuthController, AuthState>((
+  ref,
+) {
   final repo = ref.watch(authRepoProvider);
   final c = AuthController(repo, ref);
   c.bootstrap(); // load token awal
   return c;
-
 });
 
 // ===== Dio + Interceptor =====
 final dioProvider = Provider<Dio>((ref) {
   final env = ref.watch(envProvider);
-  final dio = Dio(BaseOptions(
-    baseUrl: env.baseUrl,
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 20),
-  ));
+  final dio = Dio(
+    BaseOptions(
+      baseUrl: env.baseUrl,
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 20),
+    ),
+  );
   dio.interceptors.add(AuthInterceptor(ref)); // saat ini no-op / bearer
   return dio;
 });
@@ -61,12 +63,12 @@ final dioProvider = Provider<Dio>((ref) {
 // NOTE: Repo ini HARUS dioverride di main.dart (ProviderScope.overrides)
 final camerasRepoProviderOverride = Provider<CamerasRepo>((ref) {
   throw UnimplementedError(
-      'Sambungkan CamerasRepo ke Fake/API sebelum dipakai');
+    'Sambungkan CamerasRepo ke Fake/API sebelum dipakai',
+  );
 });
 
 final anomaliesRepoProviderOverride = Provider<AnomaliesRepo>((ref) {
   throw UnimplementedError(
-      'Sambungkan AnomaliesRepo ke Fake/API sebelum dipakai');
+    'Sambungkan AnomaliesRepo ke Fake/API sebelum dipakai',
+  );
 });
-
-

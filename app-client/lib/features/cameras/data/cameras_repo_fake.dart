@@ -57,9 +57,11 @@ class CamerasRepoFake implements CamerasRepo {
     await Future.delayed(delay);
 
     // Find the camera by ID.
-    final camera = _cameras.firstWhere((cam) => cam.id == id,
-        orElse: () => throw Exception('Camera with ID $id not found.'));
+    final camera = _cameras.firstWhere(
+      (cam) => cam.id == id,
+      orElse: () => throw Exception('Camera with ID $id not found.'),
+    );
 
     return camera;
-    }
+  }
 }

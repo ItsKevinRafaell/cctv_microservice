@@ -12,7 +12,8 @@ part of 'camera.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 Camera _$CameraFromJson(Map<String, dynamic> json) {
   return _Camera.fromJson(json);
@@ -42,13 +43,14 @@ abstract class $CameraCopyWith<$Res> {
   factory $CameraCopyWith(Camera value, $Res Function(Camera) then) =
       _$CameraCopyWithImpl<$Res, Camera>;
   @useResult
-  $Res call(
-      {String id,
-      String name,
-      String? location,
-      bool online,
-      int activeAlerts,
-      String? streamUrl});
+  $Res call({
+    String id,
+    String name,
+    String? location,
+    bool online,
+    int activeAlerts,
+    String? streamUrl,
+  });
 }
 
 /// @nodoc
@@ -73,49 +75,54 @@ class _$CameraCopyWithImpl<$Res, $Val extends Camera>
     Object? activeAlerts = null,
     Object? streamUrl = freezed,
   }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      location: freezed == location
-          ? _value.location
-          : location // ignore: cast_nullable_to_non_nullable
-              as String?,
-      online: null == online
-          ? _value.online
-          : online // ignore: cast_nullable_to_non_nullable
-              as bool,
-      activeAlerts: null == activeAlerts
-          ? _value.activeAlerts
-          : activeAlerts // ignore: cast_nullable_to_non_nullable
-              as int,
-      streamUrl: freezed == streamUrl
-          ? _value.streamUrl
-          : streamUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            id: null == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as String,
+            name: null == name
+                ? _value.name
+                : name // ignore: cast_nullable_to_non_nullable
+                      as String,
+            location: freezed == location
+                ? _value.location
+                : location // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            online: null == online
+                ? _value.online
+                : online // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            activeAlerts: null == activeAlerts
+                ? _value.activeAlerts
+                : activeAlerts // ignore: cast_nullable_to_non_nullable
+                      as int,
+            streamUrl: freezed == streamUrl
+                ? _value.streamUrl
+                : streamUrl // ignore: cast_nullable_to_non_nullable
+                      as String?,
+          )
+          as $Val,
+    );
   }
 }
 
 /// @nodoc
 abstract class _$$CameraImplCopyWith<$Res> implements $CameraCopyWith<$Res> {
   factory _$$CameraImplCopyWith(
-          _$CameraImpl value, $Res Function(_$CameraImpl) then) =
-      __$$CameraImplCopyWithImpl<$Res>;
+    _$CameraImpl value,
+    $Res Function(_$CameraImpl) then,
+  ) = __$$CameraImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String id,
-      String name,
-      String? location,
-      bool online,
-      int activeAlerts,
-      String? streamUrl});
+  $Res call({
+    String id,
+    String name,
+    String? location,
+    bool online,
+    int activeAlerts,
+    String? streamUrl,
+  });
 }
 
 /// @nodoc
@@ -123,8 +130,9 @@ class __$$CameraImplCopyWithImpl<$Res>
     extends _$CameraCopyWithImpl<$Res, _$CameraImpl>
     implements _$$CameraImplCopyWith<$Res> {
   __$$CameraImplCopyWithImpl(
-      _$CameraImpl _value, $Res Function(_$CameraImpl) _then)
-      : super(_value, _then);
+    _$CameraImpl _value,
+    $Res Function(_$CameraImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of Camera
   /// with the given fields replaced by the non-null parameter values.
@@ -138,58 +146,61 @@ class __$$CameraImplCopyWithImpl<$Res>
     Object? activeAlerts = null,
     Object? streamUrl = freezed,
   }) {
-    return _then(_$CameraImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      location: freezed == location
-          ? _value.location
-          : location // ignore: cast_nullable_to_non_nullable
-              as String?,
-      online: null == online
-          ? _value.online
-          : online // ignore: cast_nullable_to_non_nullable
-              as bool,
-      activeAlerts: null == activeAlerts
-          ? _value.activeAlerts
-          : activeAlerts // ignore: cast_nullable_to_non_nullable
-              as int,
-      streamUrl: freezed == streamUrl
-          ? _value.streamUrl
-          : streamUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ));
+    return _then(
+      _$CameraImpl(
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as String,
+        name: null == name
+            ? _value.name
+            : name // ignore: cast_nullable_to_non_nullable
+                  as String,
+        location: freezed == location
+            ? _value.location
+            : location // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        online: null == online
+            ? _value.online
+            : online // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        activeAlerts: null == activeAlerts
+            ? _value.activeAlerts
+            : activeAlerts // ignore: cast_nullable_to_non_nullable
+                  as int,
+        streamUrl: freezed == streamUrl
+            ? _value.streamUrl
+            : streamUrl // ignore: cast_nullable_to_non_nullable
+                  as String?,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$CameraImpl implements _Camera {
-  const _$CameraImpl(
-      {required this.id,
-      required this.name,
-      this.location,
-      this.online = false,
-      this.activeAlerts = 0,
-      this.streamUrl});
+  const _$CameraImpl({
+    required this.id,
+    required this.name,
+    this.location,
+    this.online = false,
+    this.activeAlerts = 0,
+    this.streamUrl,
+  });
 
   factory _$CameraImpl.fromJson(Map<String, dynamic> json) =>
       _$$CameraImplFromJson(json);
 
   @override
   final String id;
-// contoh: "cam1"
+  // contoh: "cam1"
   @override
   final String name;
-// "Lobby - Cam 1"
+  // "Lobby - Cam 1"
   @override
   final String? location;
-// nullable -> sesuai backend
+  // nullable -> sesuai backend
   @override
   @JsonKey()
   final bool online;
@@ -223,7 +234,14 @@ class _$CameraImpl implements _Camera {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-      runtimeType, id, name, location, online, activeAlerts, streamUrl);
+    runtimeType,
+    id,
+    name,
+    location,
+    online,
+    activeAlerts,
+    streamUrl,
+  );
 
   /// Create a copy of Camera
   /// with the given fields replaced by the non-null parameter values.
@@ -235,20 +253,19 @@ class _$CameraImpl implements _Camera {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$CameraImplToJson(
-      this,
-    );
+    return _$$CameraImplToJson(this);
   }
 }
 
 abstract class _Camera implements Camera {
-  const factory _Camera(
-      {required final String id,
-      required final String name,
-      final String? location,
-      final bool online,
-      final int activeAlerts,
-      final String? streamUrl}) = _$CameraImpl;
+  const factory _Camera({
+    required final String id,
+    required final String name,
+    final String? location,
+    final bool online,
+    final int activeAlerts,
+    final String? streamUrl,
+  }) = _$CameraImpl;
 
   factory _Camera.fromJson(Map<String, dynamic> json) = _$CameraImpl.fromJson;
 

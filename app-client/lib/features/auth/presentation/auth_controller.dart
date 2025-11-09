@@ -9,7 +9,7 @@ class AuthController extends StateNotifier<AuthState> {
   final AuthRepo _repo;
   final Ref _ref;
   AuthController(this._repo, this._ref)
-      : super(const AuthState.unauthenticated());
+    : super(const AuthState.unauthenticated());
 
   // Method bootstrap untuk memeriksa token saat aplikasi pertama kali dibuka
   Future<void> bootstrap() async {
@@ -30,7 +30,10 @@ class AuthController extends StateNotifier<AuthState> {
 
   Future<void> signUp(String email, String password, String company) async {
     state = await _repo.signUp(
-        email: email, password: password, companyId: company);
+      email: email,
+      password: password,
+      companyId: company,
+    );
     state.when(
       unauthenticated: () {
         _ref.read(authTokenProvider.notifier).state = null;

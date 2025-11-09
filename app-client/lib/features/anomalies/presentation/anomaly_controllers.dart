@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:anomeye/features/anomalies/domain/anomaly.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:anomeye/features/anomalies/domain/anomalies_repo.dart';
@@ -13,33 +15,43 @@ final anomaliesRepoProvider = Provider<AnomaliesRepo>((ref) {
 /// State list anomalies, selalu fetch data baru saat halaman dibuka.
 final anomaliesListProvider = StateNotifierProvider.autoDispose
     .family<AnomaliesListController, AsyncValue<List<Anomaly>>, String?>(
-  (ref, cameraId) => AnomaliesListController(ref, cameraId),
-);
+      (ref, cameraId) => AnomaliesListController(ref, cameraId),
+    );
 
 /// State detail anomaly, selalu fetch data baru saat halaman dibuka.
 final anomalyDetailProvider = StateNotifierProvider.autoDispose
     .family<AnomalyDetailController, AsyncValue<Anomaly>, String>(
-  (ref, id) => AnomalyDetailController(ref, id),
-);
+      (ref, id) => AnomalyDetailController(ref, id),
+    );
 
 class AnomaliesListController extends StateNotifier<AsyncValue<List<Anomaly>>> {
   AnomaliesListController(this._ref, this.cameraId)
-      : super(const AsyncValue.loading()) {
+    : super(const AsyncValue.loading()) {
     // Memuat data secara otomatis saat controller dibuat
     load();
+    _ticker = Timer.periodic(const Duration(seconds: 8), (_) => load(silent: true));
+    _ref.onDispose(() {
+      _ticker?.cancel();
+    });
   }
   final Ref _ref;
   final String? cameraId;
+  Timer? _ticker;
 
-  Future<void> load() async {
-    /* ... implementasi tidak berubah ... */
-    state = const AsyncValue.loading();
+  Future<void> load({bool silent = false}) async {
+    if (!silent) {
+      state = const AsyncValue.loading();
+    }
     try {
       final repo = _ref.read(anomaliesRepoProvider);
       final list = await repo.listRecent(cameraId: cameraId, limit: 50);
-      if (mounted) state = AsyncValue.data(list);
+      if (mounted) {
+        state = AsyncValue.data(list);
+      }
     } catch (e, st) {
-      if (mounted) state = AsyncValue.error(e, st);
+      if (mounted && !silent) {
+        state = AsyncValue.error(e, st);
+      }
     }
   }
 }
@@ -47,7 +59,7 @@ class AnomaliesListController extends StateNotifier<AsyncValue<List<Anomaly>>> {
 class AnomalyDetailController extends StateNotifier<AsyncValue<Anomaly>> {
   // FIX: Tambahkan pemanggilan load() di constructor, sama seperti ListController
   AnomalyDetailController(this._ref, this.id)
-      : super(const AsyncValue.loading()) {
+    : super(const AsyncValue.loading()) {
     load();
   }
   final Ref _ref;

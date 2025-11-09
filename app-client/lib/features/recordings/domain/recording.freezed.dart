@@ -12,7 +12,8 @@ part of 'recording.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 Recording _$RecordingFromJson(Map<String, dynamic> json) {
   return _Recording.fromJson(json);
@@ -42,13 +43,14 @@ abstract class $RecordingCopyWith<$Res> {
   factory $RecordingCopyWith(Recording value, $Res Function(Recording) then) =
       _$RecordingCopyWithImpl<$Res, Recording>;
   @useResult
-  $Res call(
-      {String cameraId,
-      DateTime startedAt,
-      DateTime endedAt,
-      String key,
-      int sizeBytes,
-      String? url});
+  $Res call({
+    String cameraId,
+    DateTime startedAt,
+    DateTime endedAt,
+    String key,
+    int sizeBytes,
+    String? url,
+  });
 }
 
 /// @nodoc
@@ -73,32 +75,35 @@ class _$RecordingCopyWithImpl<$Res, $Val extends Recording>
     Object? sizeBytes = null,
     Object? url = freezed,
   }) {
-    return _then(_value.copyWith(
-      cameraId: null == cameraId
-          ? _value.cameraId
-          : cameraId // ignore: cast_nullable_to_non_nullable
-              as String,
-      startedAt: null == startedAt
-          ? _value.startedAt
-          : startedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      endedAt: null == endedAt
-          ? _value.endedAt
-          : endedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      key: null == key
-          ? _value.key
-          : key // ignore: cast_nullable_to_non_nullable
-              as String,
-      sizeBytes: null == sizeBytes
-          ? _value.sizeBytes
-          : sizeBytes // ignore: cast_nullable_to_non_nullable
-              as int,
-      url: freezed == url
-          ? _value.url
-          : url // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            cameraId: null == cameraId
+                ? _value.cameraId
+                : cameraId // ignore: cast_nullable_to_non_nullable
+                      as String,
+            startedAt: null == startedAt
+                ? _value.startedAt
+                : startedAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime,
+            endedAt: null == endedAt
+                ? _value.endedAt
+                : endedAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime,
+            key: null == key
+                ? _value.key
+                : key // ignore: cast_nullable_to_non_nullable
+                      as String,
+            sizeBytes: null == sizeBytes
+                ? _value.sizeBytes
+                : sizeBytes // ignore: cast_nullable_to_non_nullable
+                      as int,
+            url: freezed == url
+                ? _value.url
+                : url // ignore: cast_nullable_to_non_nullable
+                      as String?,
+          )
+          as $Val,
+    );
   }
 }
 
@@ -106,17 +111,19 @@ class _$RecordingCopyWithImpl<$Res, $Val extends Recording>
 abstract class _$$RecordingImplCopyWith<$Res>
     implements $RecordingCopyWith<$Res> {
   factory _$$RecordingImplCopyWith(
-          _$RecordingImpl value, $Res Function(_$RecordingImpl) then) =
-      __$$RecordingImplCopyWithImpl<$Res>;
+    _$RecordingImpl value,
+    $Res Function(_$RecordingImpl) then,
+  ) = __$$RecordingImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String cameraId,
-      DateTime startedAt,
-      DateTime endedAt,
-      String key,
-      int sizeBytes,
-      String? url});
+  $Res call({
+    String cameraId,
+    DateTime startedAt,
+    DateTime endedAt,
+    String key,
+    int sizeBytes,
+    String? url,
+  });
 }
 
 /// @nodoc
@@ -124,8 +131,9 @@ class __$$RecordingImplCopyWithImpl<$Res>
     extends _$RecordingCopyWithImpl<$Res, _$RecordingImpl>
     implements _$$RecordingImplCopyWith<$Res> {
   __$$RecordingImplCopyWithImpl(
-      _$RecordingImpl _value, $Res Function(_$RecordingImpl) _then)
-      : super(_value, _then);
+    _$RecordingImpl _value,
+    $Res Function(_$RecordingImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of Recording
   /// with the given fields replaced by the non-null parameter values.
@@ -139,45 +147,48 @@ class __$$RecordingImplCopyWithImpl<$Res>
     Object? sizeBytes = null,
     Object? url = freezed,
   }) {
-    return _then(_$RecordingImpl(
-      cameraId: null == cameraId
-          ? _value.cameraId
-          : cameraId // ignore: cast_nullable_to_non_nullable
-              as String,
-      startedAt: null == startedAt
-          ? _value.startedAt
-          : startedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      endedAt: null == endedAt
-          ? _value.endedAt
-          : endedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      key: null == key
-          ? _value.key
-          : key // ignore: cast_nullable_to_non_nullable
-              as String,
-      sizeBytes: null == sizeBytes
-          ? _value.sizeBytes
-          : sizeBytes // ignore: cast_nullable_to_non_nullable
-              as int,
-      url: freezed == url
-          ? _value.url
-          : url // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ));
+    return _then(
+      _$RecordingImpl(
+        cameraId: null == cameraId
+            ? _value.cameraId
+            : cameraId // ignore: cast_nullable_to_non_nullable
+                  as String,
+        startedAt: null == startedAt
+            ? _value.startedAt
+            : startedAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime,
+        endedAt: null == endedAt
+            ? _value.endedAt
+            : endedAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime,
+        key: null == key
+            ? _value.key
+            : key // ignore: cast_nullable_to_non_nullable
+                  as String,
+        sizeBytes: null == sizeBytes
+            ? _value.sizeBytes
+            : sizeBytes // ignore: cast_nullable_to_non_nullable
+                  as int,
+        url: freezed == url
+            ? _value.url
+            : url // ignore: cast_nullable_to_non_nullable
+                  as String?,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$RecordingImpl implements _Recording {
-  const _$RecordingImpl(
-      {required this.cameraId,
-      required this.startedAt,
-      required this.endedAt,
-      required this.key,
-      required this.sizeBytes,
-      this.url});
+  const _$RecordingImpl({
+    required this.cameraId,
+    required this.startedAt,
+    required this.endedAt,
+    required this.key,
+    required this.sizeBytes,
+    this.url,
+  });
 
   factory _$RecordingImpl.fromJson(Map<String, dynamic> json) =>
       _$$RecordingImplFromJson(json);
@@ -190,7 +201,7 @@ class _$RecordingImpl implements _Recording {
   final DateTime endedAt;
   @override
   final String key;
-// s3_key
+  // s3_key
   @override
   final int sizeBytes;
   @override
@@ -220,7 +231,14 @@ class _$RecordingImpl implements _Recording {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-      runtimeType, cameraId, startedAt, endedAt, key, sizeBytes, url);
+    runtimeType,
+    cameraId,
+    startedAt,
+    endedAt,
+    key,
+    sizeBytes,
+    url,
+  );
 
   /// Create a copy of Recording
   /// with the given fields replaced by the non-null parameter values.
@@ -232,20 +250,19 @@ class _$RecordingImpl implements _Recording {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$RecordingImplToJson(
-      this,
-    );
+    return _$$RecordingImplToJson(this);
   }
 }
 
 abstract class _Recording implements Recording {
-  const factory _Recording(
-      {required final String cameraId,
-      required final DateTime startedAt,
-      required final DateTime endedAt,
-      required final String key,
-      required final int sizeBytes,
-      final String? url}) = _$RecordingImpl;
+  const factory _Recording({
+    required final String cameraId,
+    required final DateTime startedAt,
+    required final DateTime endedAt,
+    required final String key,
+    required final int sizeBytes,
+    final String? url,
+  }) = _$RecordingImpl;
 
   factory _Recording.fromJson(Map<String, dynamic> json) =
       _$RecordingImpl.fromJson;

@@ -13,7 +13,9 @@ class CamerasRepoApi implements CamerasRepo {
     if (data is! List) {
       throw Exception('Unexpected response for /api/cameras');
     }
-    return data.map<Camera>((e) => _map((e as Map).cast<String, dynamic>())).toList();
+    return data
+        .map<Camera>((e) => _map((e as Map).cast<String, dynamic>()))
+        .toList();
   }
 
   @override
@@ -56,4 +58,3 @@ class CamerasRepoApi implements CamerasRepo {
     );
   }
 }
-

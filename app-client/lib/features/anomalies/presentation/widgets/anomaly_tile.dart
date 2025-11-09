@@ -12,7 +12,7 @@ class AnomalyTile extends StatelessWidget {
       leading: const Icon(Icons.warning_amber_rounded, color: Colors.orange),
       title: Text(item.anomalyType),
       subtitle: Text(
-        '${item.cameraId} • ${item.reportedAt}',
+        '${item.cameraId} - ${item.reportedAt}',
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
       ),

@@ -60,6 +60,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               controller: _email,
               decoration: AuthTheme.input('E-mail'),
               keyboardType: TextInputType.emailAddress,
+              cursorColor: Colors.white,
+              style: const TextStyle(color: Colors.white),
               validator: (v) =>
                   (v == null || v.isEmpty) ? 'E-mail is required' : null,
             ),
@@ -73,6 +75,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 ),
               ),
               obscureText: _hide1,
+              cursorColor: Colors.white,
+              style: const TextStyle(color: Colors.white),
               validator: (v) =>
                   (v == null || v.length < 6) ? 'Min. 6 characters' : null,
             ),
@@ -86,6 +90,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 ),
               ),
               obscureText: _hide2,
+              cursorColor: Colors.white,
+              style: const TextStyle(color: Colors.white),
               validator: (v) =>
                   (v != _password.text) ? 'Passwords do not match' : null,
             ),
@@ -99,30 +105,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     ? const SizedBox(
                         height: 22,
                         width: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2))
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ))
                     : const Text('Sign Up'),
               ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('Already have an account? ',
-                    style: TextStyle(fontSize: 12.5, color: Colors.black54)),
-                InkWell(
-                  onTap: () => context.go('/sign-in'),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8.0),
-                    child: Text('Sign In',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                          color: AuthTheme.primaryBlue,
-                          decoration: TextDecoration.underline,
-                        )),
-                  ),
-                ),
-              ],
             ),
           ],
         ),
